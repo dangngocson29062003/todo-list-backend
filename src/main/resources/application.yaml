@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: demo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/demo_db
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret: JpvyrD9cPfpPik/VUHYKrsICN+yjpUx5MieAP7U5/jPn7Tp8FhgBoWk6DFK1NtRwHuc75VE1gnPPMwq4ypYJ/w==
+#  access-token-expiration: 600000     # 10 minutes
+#  refresh-token-expiration: 604800000  # 7 days
+
+server:
+  error:
+    include-message: always
+    include-stacktrace: always
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
