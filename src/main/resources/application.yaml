@@ -1,6 +1,6 @@
 spring:
   application:
-    name: demo
+    name: weaver
 
   datasource:
     url: jdbc:postgresql://localhost:5432/demo_db

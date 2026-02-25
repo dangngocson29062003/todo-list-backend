@@ -1,5 +1,6 @@
 package com.example.weaver.utils;
 
+import com.example.weaver.dtos.AuthUser;
 import com.example.weaver.models.User;
 import com.example.weaver.services.JwtService;
 import com.example.weaver.services.UserService;
@@ -39,10 +40,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         UUID userId = jwtService.getUserId(token);
-        User user=userService.findById(userId);
+        String email = jwtService.getEmail(token);
+
+        AuthUser authUser=new AuthUser();
+        authUser.setId(userId);
+        authUser.setEmail(email);
 
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(user,null);
+                new UsernamePasswordAuthenticationToken(authUser,null,null);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         filterChain.doFilter(request,response);

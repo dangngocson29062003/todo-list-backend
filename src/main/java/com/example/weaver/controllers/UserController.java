@@ -20,7 +20,7 @@ public class UserController {
     private final AppService appService;
 
     @PostMapping("/register")
-    public User register(@Valid @RequestBody RegisterRequest registerRequest){
+    public LoginResponse register(@Valid @RequestBody RegisterRequest registerRequest){
         return appService.register(registerRequest.getEmail(),registerRequest.getPassword());
     }
     @PostMapping("/login")

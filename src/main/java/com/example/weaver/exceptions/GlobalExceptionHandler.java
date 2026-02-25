@@ -16,7 +16,6 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<?>> handleAppException(AppException e) {
-
         return ResponseEntity
                 .status(e.getStatus())
                 .body(ApiResponse.error(

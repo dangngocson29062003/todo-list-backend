@@ -15,11 +15,16 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfigs {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final String[] ALLOWED_PATHS=new String[]{
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/**"};
     @Bean
     public SecurityFilterChain securityWebFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(requests ->
-                        requests.requestMatchers("/**").permitAll()
+                        requests.requestMatchers(ALLOWED_PATHS).permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
