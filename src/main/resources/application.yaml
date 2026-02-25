@@ -3,9 +3,9 @@ spring:
     name: weaver
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/demo_db
+    url: jdbc:postgresql://localhost:5432/weaver
     username: postgres
-    password: 123456
+    password: sondang2906
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -23,6 +23,7 @@ jwt:
 #  refresh-token-expiration: 604800000  # 7 days
 
 server:
+  port: 8090
   error:
     include-message: always
     include-stacktrace: always

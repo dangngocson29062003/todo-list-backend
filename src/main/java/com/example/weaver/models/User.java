@@ -11,6 +11,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -53,4 +55,13 @@ public class User {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<Comment> comments = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<Attachment> attachments = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private Set<TaskAssignment> taskAssignments = new HashSet<>();
 }
