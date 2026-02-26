@@ -18,7 +18,6 @@ public class ProjectMemberService {
 
     public ProjectMember addProjectMember(Project project, User user) {
         ProjectMember projectMember = ProjectMember.builder()
-                .id(UUID.randomUUID())
                 .project(project)
                 .user(user)
                 .name(user.getNickname())

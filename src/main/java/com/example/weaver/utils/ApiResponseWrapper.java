@@ -1,6 +1,6 @@
 package com.example.weaver.utils;
 
-import com.example.weaver.dtos.ApiResponse;
+import com.example.weaver.dtos.others.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

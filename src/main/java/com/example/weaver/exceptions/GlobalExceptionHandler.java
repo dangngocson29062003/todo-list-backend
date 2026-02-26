@@ -1,6 +1,6 @@
 package com.example.weaver.exceptions;
 
-import com.example.weaver.dtos.ApiResponse;
+import com.example.weaver.dtos.others.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;

@@ -17,8 +17,34 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: huyquoc261223@gmail.com
+    password: ${EMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  web-url: ${WEB_URL}
+
 jwt:
-  secret: JpvyrD9cPfpPik/VUHYKrsICN+yjpUx5MieAP7U5/jPn7Tp8FhgBoWk6DFK1NtRwHuc75VE1gnPPMwq4ypYJ/w==
+  secret: ${SECRET}
 #  access-token-expiration: 600000     # 10 minutes
 #  refresh-token-expiration: 604800000  # 7 days
 

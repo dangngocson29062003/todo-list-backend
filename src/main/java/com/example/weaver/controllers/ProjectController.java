@@ -1,6 +1,6 @@
 package com.example.weaver.controllers;
 
-import com.example.weaver.dtos.AuthUser;
+import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.CreateProjectRequest;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
@@ -24,7 +24,7 @@ public class ProjectController {
                               @AuthenticationPrincipal AuthUser authUser) {
         return appService.getProject(id,authUser.getId());
     }
-    @GetMapping("/all")
+    @GetMapping
     public List<Project> getAllProjects(@AuthenticationPrincipal AuthUser authUser) {
         return appService.getProjectsByUserId(authUser.getId());
     }

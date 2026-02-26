@@ -21,13 +21,22 @@ public class UserService {
             throw new NotFoundException("User with this email already exists");
         }
         User user=User.builder()
-                .id(UUID.randomUUID())
                 .email(email)
                 .password(hashedPassword)
-                .status(UserStatus.ACTIVE)
+                .status(UserStatus.PENDING)
                 .provider(AuthProvider.LOCAL)
                 .build();
         return userRepository.save(user);
+    }
+
+    public User createUserViaOAuth(String email,AuthProvider authProvider,String providerId){
+        User newUser=User.builder()
+                .email(email)
+                .status(UserStatus.ACTIVE)
+                .provider(authProvider)
+                .providerId(providerId)
+                .build();
+        return userRepository.save(newUser);
     }
 
     public boolean existsByEmail(String email){
