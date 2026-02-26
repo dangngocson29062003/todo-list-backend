@@ -6,12 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectMemberRequest {
-    @NotNull(message = "User Id is required")
-    private UUID userId;
+public class UpdateProjectMemberRoleRequest {
+    @NotNull(message = "New role is required")
+    private Role newRole;
 }

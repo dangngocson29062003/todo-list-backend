@@ -58,9 +58,14 @@ public class Task {
     @Column
     private Priority priority;
 
+<<<<<<< HEAD
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "projectId")
     @JsonIgnore
+=======
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "projectId", nullable = false)
+>>>>>>> origin/main
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)

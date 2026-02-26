@@ -1,5 +1,7 @@
 package com.example.weaver.services;
 
+import com.example.weaver.enums.Role;
+import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
@@ -16,13 +18,22 @@ import java.util.UUID;
 public class ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
 
-    public ProjectMember addProjectMember(Project project, User user) {
+    public ProjectMember addProjectMember(Project project, User user, Role role) {
         ProjectMember projectMember = ProjectMember.builder()
                 .project(project)
                 .user(user)
                 .name(user.getNickname())
+                .role(role)
                 .build();
         return projectMemberRepository.save(projectMember);
+    }
+    public ProjectMember updateProjectMemberRole(UUID projectId,UUID userId, Role newRole) {
+        ProjectMember projectMember=getProjectMember(projectId,userId);
+        if(!projectMember.getRole().equals(newRole)){
+            projectMember.setRole(newRole);
+        }
+//        return projectMemberRepository.save(projectMember);
+        return projectMember;
     }
     public void removeProjectMember(UUID projectId, UUID userId) {
         ProjectMember projectMember=getProjectMember(projectId,userId);
@@ -37,7 +48,7 @@ public class ProjectMemberService {
     }
     public ProjectMember getProjectMember(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProject_IdAndUser_Id(projectId,userId)
-                .orElseThrow(()->new NotFoundException("User does not belong to this project"));
+                .orElseThrow(()->new BadRequestException("User does not belong to this project"));
     }
     public boolean memberExists(UUID projectId, UUID userId) {
         return projectMemberRepository.existsByProject_IdAndUser_Id(projectId,userId);

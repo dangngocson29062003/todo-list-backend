@@ -1,6 +1,6 @@
 package com.example.weaver.utils;
 
-import com.example.weaver.dtos.ApiResponse;
+import com.example.weaver.dtos.others.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -16,10 +16,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 @RequiredArgsConstructor
 public class ApiResponseWrapper implements ResponseBodyAdvice<Object> {
     private final ObjectMapper objectMapper;
+
     @Override
-    public boolean supports(
-            MethodParameter returnType,
-            Class converterType) {
+    public boolean supports(MethodParameter returnType, Class converterType) {
         return true;
     }
 
