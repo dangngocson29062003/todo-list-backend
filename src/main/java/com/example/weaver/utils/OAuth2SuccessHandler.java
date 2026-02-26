@@ -11,6 +11,7 @@ import com.example.weaver.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -23,6 +24,8 @@ import java.io.IOException;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final UserService userService;
     private final JwtService jwtService;
+    @Value("${app.web-url}")
+    private String webUrl;
 
     //Web goi den http://localhost:8080/oauth2/authorization/google de dang nhap bang google
     @Override
@@ -61,8 +64,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String refreshToken = jwtService.generateRefreshToken(user);
 
         String redirectUrl =
-                "http://localhost:5173/oauth-success"
-                        + "?accessToken=" + accessToken
+                webUrl + "?accessToken=" + accessToken
                         + "&refreshToken=" + refreshToken;
 
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);

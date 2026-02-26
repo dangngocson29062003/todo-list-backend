@@ -53,21 +53,13 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    public boolean validateToken(String token) {
-        try {
-            parseToken(token);
-            return !isExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
+
+    public UUID getUserId(Claims claims) {
+        return UUID.fromString(claims.getSubject());
     }
-    public UUID getUserId(String token) {
-        return UUID.fromString(
-                parseToken(token).getSubject()
-        );
-    }
-    public String getEmail(String token) {
-        return parseToken(token).get("email").toString();
+
+    public String getEmail(Claims claims) {
+        return claims.get("email", String.class);
     }
     public boolean isExpired(String token) {
         return parseToken(token).getExpiration().before(new Date());

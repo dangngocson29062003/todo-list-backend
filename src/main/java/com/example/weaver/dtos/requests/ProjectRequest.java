@@ -10,8 +10,7 @@ import java.time.Instant;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateProjectRequest {
-    @NotBlank(message = "Project's name is required")
+public class ProjectRequest {
     private String name;
     private String description;
     private Instant finishedAt;

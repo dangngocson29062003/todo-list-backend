@@ -57,8 +57,8 @@ public class Task {
     @Column
     private Priority priority;
 
-    @ManyToOne
-    @JoinColumn(name = "projectId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "projectId", nullable = false)
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
