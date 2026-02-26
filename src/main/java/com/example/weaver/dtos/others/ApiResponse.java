@@ -1,4 +1,4 @@
-package com.example.weaver.dtos;
+package com.example.weaver.dtos.others;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

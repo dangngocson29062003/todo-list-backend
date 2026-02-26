@@ -1,5 +1,6 @@
 package com.example.weaver.models;
 
+import com.example.weaver.enums.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,7 +35,7 @@ import java.util.UUID;
 @Builder
 public class ProjectMember {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,6 +48,10 @@ public class ProjectMember {
     private Project project;
 
     private String name;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     @CreationTimestamp
     private Instant createdAt;
