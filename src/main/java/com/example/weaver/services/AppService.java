@@ -89,10 +89,17 @@ public class AppService {
         return jwtService.generateAccessToken(user);
     }
 
+    public UUID getCurrentUserId() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+        return authUser.getId();
+    }
+
     //PROJECT
     @Transactional(readOnly = true)
     public Project getProject(UUID projectId, UUID requesterId) {
-        ProjectMember member = projectMemberService.getProjectMember(projectId, requesterId);
+        ProjectMember member = projectMemberService.getProjectMember(projectId,requesterId);
         return member.getProject();
     }
 

@@ -9,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "projects")
@@ -29,6 +30,9 @@ public class Project {
     private String description;
 
     private Instant finishedAt;
+
+    @OneToMany(mappedBy = "project")
+    private Set<Task> tasks;
 
     @CreationTimestamp
     private Instant createdAt;
