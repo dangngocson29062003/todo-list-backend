@@ -1,13 +1,18 @@
 package com.example.weaver.services;
 
+import com.example.weaver.dtos.events.UserRegisteredEvent;
+import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
+import com.example.weaver.dtos.others.EmailVerificationResult;
 import com.example.weaver.dtos.responses.LoginResponse;
 import com.example.weaver.enums.UserStatus;
+import com.example.weaver.enums.EmailVerificationStatus;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.User;
 import com.example.weaver.services.Others.JwtService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,7 +31,9 @@ public class AppService {
     private final ProjectMemberService projectMemberService;
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
+
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     //USER
     public LoginResponse login(String email, String password) {
@@ -36,7 +43,11 @@ public class AppService {
         }
         if (user.get().getStatus() != UserStatus.ACTIVE) {
             if (user.get().getStatus() == UserStatus.PENDING) {
-                throw new ForbiddenException("Email verification code has been sent to your email");
+                if (emailService.checkIfTokenExpiredByEmail(email))
+                    eventPublisher.publishEvent
+                            (new EmailVerificationExpiredEvent(user.get().getId(), email));
+
+                throw new ForbiddenException("Please check your email for confirmation");
             } else {
                 throw new ForbiddenException("You are banned");
             }
@@ -50,15 +61,23 @@ public class AppService {
     public void register(String email, String password) {
         String hashedPassword = passwordEncoder.encode(password);
         User user = userService.create(email, hashedPassword);
-        emailService.sendVerificationEmail(user);
-//        String accessToken= jwtService.generateAccessToken(user);
-//        String refreshToken= jwtService.generateRefreshToken(user);
-//        return new LoginResponse(accessToken,refreshToken);
+
+        eventPublisher.publishEvent
+                (new UserRegisteredEvent(user.getId(),email));
+//        emailService.sendVerificationEmail(user);
     }
 
     @Transactional
-    public boolean verifyEmail(String token) {
-        return emailService.verify(token);
+    public EmailVerificationResult verifyEmail(String token) {
+
+        EmailVerificationResult result = emailService.verify(token);
+
+        if (result.status() == EmailVerificationStatus.EXPIRED) {
+            eventPublisher.publishEvent
+                    (new EmailVerificationExpiredEvent(result.userId(), result.email()));
+        }
+
+        return result;
     }
 
     public String getNewAccessToken(String refreshToken) {
