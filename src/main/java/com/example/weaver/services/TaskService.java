@@ -1,5 +1,7 @@
 package com.example.weaver.services;
 
+import com.example.weaver.dtos.requests.CreateTaskRequest;
+import com.example.weaver.dtos.requests.UpdateTaskRequest;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
@@ -14,7 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -31,18 +35,108 @@ public class TaskService {
     @Autowired
     AppService appService;
 
-    public Task create(UUID projectID, UUID currentUserId, String name, String description, Instant startedAt, Instant endedAt, TaskType type, Priority priority) {
-
-        Project project = projectRepository.findById(projectID).orElseThrow(() -> new NotFoundException("Project not found"));
-
+    public Task getTask(Long taskId, UUID projectID, UUID currentUserId){
         boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(projectID, currentUserId);
 
         if(!isMember) {
             throw new BadRequestException("Not a project member");
         }
 
-        Task task = Task.builder().name(name).description(description).startedAt(startedAt).endedAt(endedAt).type(type).priority(priority).build();
+        return taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Not found"));
+    }
+
+    public List<Task> getTasks(
+            UUID projectId,
+            UUID currentUserId,
+            TaskStatus status,
+            Priority priority,
+            TaskType type
+    ) {
+        boolean isMember = projectMemberRepository
+                .existsByProject_IdAndUser_Id(projectId, currentUserId);
+
+        if (!isMember) {
+            throw new BadRequestException("Not a project member");
+        }
+
+        return taskRepository.findByFilters(projectId, status, priority, type);
+    }
+
+    public Task create(UUID projectId, UUID currentUserId, CreateTaskRequest createTaskRequest) {
+
+        Project project = projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Project not found"));
+
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(projectId, currentUserId);
+
+        if(!isMember) {
+            throw new BadRequestException("Not a project member");
+        }
+        Task parent = null;
+        if (createTaskRequest.getParentId() != null) {
+            parent = taskRepository.findById(createTaskRequest.getParentId())
+                    .orElseThrow(() -> new NotFoundException("Parent task not found"));
+
+            if (!parent.getProject().getId().equals(projectId)) {
+                throw new BadRequestException("Parent task must belong to same project");
+            }
+        }
+
+        Task task = Task.builder().project(project)
+                .name(createTaskRequest.getName())
+                .description(createTaskRequest.getDescription())
+                .startedAt(createTaskRequest.getStartedAt())
+                .endedAt(createTaskRequest.getEndedAt()).type(createTaskRequest.getTaskType())
+                .status(createTaskRequest.getTaskStatus() != null ? createTaskRequest.getTaskStatus() : TaskStatus.TODO)
+                .priority(createTaskRequest.getPriority())
+                .parent(parent)
+                .build();
 
         return taskRepository.save(task);
     }
+
+    public Task update(UUID projectId, Long taskId, UUID currentUserId, UpdateTaskRequest updateTaskRequest){
+        boolean isMember = projectMemberRepository
+                .existsByProject_IdAndUser_Id(projectId, currentUserId);
+
+        if (!isMember) {
+            throw new BadRequestException("Not a project member");
+        }
+
+        Task task = taskRepository
+                .findByIdAndProject_Id(taskId, projectId);
+
+        if (updateTaskRequest.getName() != null) {
+            task.setName(updateTaskRequest.getName());
+        }
+
+        if (updateTaskRequest.getDescription() != null) {
+            task.setDescription(updateTaskRequest.getDescription());
+        }
+
+        if (updateTaskRequest.getStartedAt() != null) {
+            task.setStartedAt(updateTaskRequest.getStartedAt());
+        }
+
+        if (updateTaskRequest.getEndedAt() != null) {
+            if (updateTaskRequest.getStartedAt() != null && updateTaskRequest.getEndedAt().isBefore(updateTaskRequest.getStartedAt())) {
+                throw new BadRequestException("End date must be after start date");
+            }
+            task.setEndedAt(updateTaskRequest.getEndedAt());
+        }
+
+        if (updateTaskRequest.getTaskType() != null) {
+            task.setType(updateTaskRequest.getTaskType());
+        }
+
+        if (updateTaskRequest.getTaskStatus() != null) {
+            task.setStatus(updateTaskRequest.getTaskStatus());
+        }
+
+        if (updateTaskRequest.getPriority() != null) {
+            task.setPriority(updateTaskRequest.getPriority());
+        }
+
+        return taskRepository.save(task);
+    }
+
 }

@@ -3,6 +3,7 @@ package com.example.weaver.models;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -50,30 +51,36 @@ public class Task {
     private TaskType type;
 
     @Enumerated(EnumType.STRING)
-    @Column
-    private TaskStatus status = TaskStatus.TODO;
+    @Column(nullable = false)
+    private TaskStatus status;
 
     @Enumerated(EnumType.STRING)
     @Column
     private Priority priority;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "projectId")
+    @JsonIgnore
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parentId")
+    @JsonIgnore
     private Task parent;
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Task> children = new HashSet<>();
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Attachment> attachments = new HashSet<>();
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Comment> comments = new HashSet<>();
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<TaskAssignment> assignments = new HashSet<>();
 }
