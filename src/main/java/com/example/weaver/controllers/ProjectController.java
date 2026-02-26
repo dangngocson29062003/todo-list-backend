@@ -7,8 +7,10 @@ import com.example.weaver.models.ProjectMember;
 import com.example.weaver.services.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,7 +26,7 @@ public class ProjectController {
                               @AuthenticationPrincipal AuthUser authUser) {
         return appService.getProject(id,authUser.getId());
     }
-    @GetMapping("/all")
+    @GetMapping
     public List<Project> getAllProjects(@AuthenticationPrincipal AuthUser authUser) {
         return appService.getProjectsByUserId(authUser.getId());
     }
@@ -34,9 +36,13 @@ public class ProjectController {
         return appService.getProjectMembers(id,authUser.getId());
     }
 
-    @PostMapping("")
+    @PostMapping
     public Project createProject(@Valid @RequestBody CreateProjectRequest request,
                                  @AuthenticationPrincipal AuthUser authUser) {
+        if (authUser == null) {
+            // Bạn có thể throw một UnauthorizedException tùy chỉnh ở đây
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn cần đăng nhập để thực hiện thao tác này");
+        }
         return appService.createProject(authUser.getId(),
                 request.getName(), request.getDescription(), request.getFinishedAt());
     }

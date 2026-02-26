@@ -1,11 +1,14 @@
 package com.example.weaver.services;
 
+import com.example.weaver.dtos.AuthUser;
 import com.example.weaver.dtos.responses.LoginResponse;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,10 +57,17 @@ public class AppService {
         return jwtService.generateAccessToken(user);
     }
 
+    public UUID getCurrentUserId() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+        AuthUser authUser = (AuthUser) authentication.getPrincipal();
+        return authUser.getId();
+    }
+
     //PROJECT
     @Transactional(readOnly = true)
     public Project getProject(UUID projectId,UUID requesterId){
-        ProjectMember member=projectMemberService.getProjectMember(projectId,requesterId);
+        ProjectMember member = projectMemberService.getProjectMember(projectId,requesterId);
         return member.getProject();
     }
 

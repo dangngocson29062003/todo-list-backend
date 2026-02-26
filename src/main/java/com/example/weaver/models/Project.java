@@ -1,9 +1,6 @@
 package com.example.weaver.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +9,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "projects")
@@ -32,6 +30,9 @@ public class Project {
     private String description;
 
     private Instant finishedAt;
+
+    @OneToMany(mappedBy = "project")
+    private Set<Task> tasks;
 
     @CreationTimestamp
     private Instant createdAt;

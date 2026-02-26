@@ -7,13 +7,16 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Entity(name = "tasks")
 public class Task {
 
@@ -48,11 +51,15 @@ public class Task {
 
     @Enumerated(EnumType.STRING)
     @Column
-    private TaskStatus status;
+    private TaskStatus status = TaskStatus.TODO;
 
     @Enumerated(EnumType.STRING)
     @Column
     private Priority priority;
+
+    @ManyToOne
+    @JoinColumn(name = "projectId")
+    private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parentId")

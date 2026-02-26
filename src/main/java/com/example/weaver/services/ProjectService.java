@@ -18,7 +18,6 @@ public class ProjectService {
 
     public Project create(UUID createdBy, String name,String description, Instant finishedAt) {
         Project project=Project.builder()
-                .id(UUID.randomUUID())
                 .createdBy(createdBy)
                 .name(name)
                 .description(description)
