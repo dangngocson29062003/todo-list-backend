@@ -1,6 +1,6 @@
 package com.example.weaver.controllers;
 
-import com.example.weaver.dtos.AuthUser;
+import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.models.Task;

@@ -16,10 +16,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 @RequiredArgsConstructor
 public class ApiResponseWrapper implements ResponseBodyAdvice<Object> {
     private final ObjectMapper objectMapper;
+
     @Override
-    public boolean supports(
-            MethodParameter returnType,
-            Class converterType) {
+    public boolean supports(MethodParameter returnType, Class converterType) {
         return true;
     }
 

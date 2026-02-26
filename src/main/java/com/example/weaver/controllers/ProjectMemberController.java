@@ -2,6 +2,8 @@ package com.example.weaver.controllers;
 
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.ProjectMemberRequest;
+import com.example.weaver.dtos.requests.UpdateProjectMemberRoleRequest;
+import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.services.AppService;
 import jakarta.validation.Valid;
@@ -9,20 +11,38 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/member")
+@RequestMapping("/projects/{projectId}/members")
 public class ProjectMemberController {
     private final AppService appService;
 
-    @PostMapping
-    public ProjectMember addProjectMember(@AuthenticationPrincipal AuthUser authUser,
-                                          @Valid @RequestBody ProjectMemberRequest request){
-        return appService.addProjectMember(authUser.getId(),request.getProjectId(),request.getUserId());
+    @GetMapping
+    public List<ProjectMemberResponse> getProjectMembers(@AuthenticationPrincipal AuthUser authUser,
+                                                 @PathVariable UUID projectId) {
+        return appService.getProjectMembers(projectId, authUser.getId());
     }
-    @DeleteMapping
+
+    @PostMapping("/{userId}")
+    public ProjectMemberResponse addProjectMember(@AuthenticationPrincipal AuthUser authUser,
+                                                  @PathVariable UUID projectId,
+                                                  @PathVariable UUID userId){
+        return appService.addProjectMember(authUser.getId(),projectId,userId);
+    }
+    @PutMapping("/{userId}")
+    public ProjectMemberResponse updateProjectMemberRole(@AuthenticationPrincipal AuthUser authUser,
+                                                 @PathVariable UUID projectId,
+                                                 @PathVariable UUID userId,
+                                                 @Valid @RequestBody UpdateProjectMemberRoleRequest request){
+        return appService.updateProjectMemberRole(authUser.getId(),projectId,userId,request.getNewRole());
+    }
+    @DeleteMapping("/{userId}")
     public void removeProjectMember(@AuthenticationPrincipal AuthUser authUser,
-                                    @Valid @RequestBody ProjectMemberRequest request){
-        appService.removeProjectMember(authUser.getId(),request.getProjectId(),request.getUserId());
+                                    @PathVariable UUID projectId,
+                                    @PathVariable UUID userId){
+        appService.removeProjectMember(authUser.getId(),projectId,userId);
     }
 }
