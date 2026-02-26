@@ -9,6 +9,7 @@ import com.example.weaver.models.User;
 import com.example.weaver.repositories.EmailVerificationTokenRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -25,10 +26,13 @@ public class EmailVerificationTokenService {
     private final EntityManager entityManager;
     private final JavaMailSender mailSender;
 
+    @Value("${app.server-url}")
+    private String serverUrl;
+
     public void sendVerificationEmail(UUID userId, String email) {
         String token = create(userId);
         String verificationUrl =
-                "http://localhost:8080/user/verify?token=" + token;
+                serverUrl+"/user/verify?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

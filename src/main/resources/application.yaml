@@ -47,6 +47,7 @@ spring:
 
 app:
   web-url: ${WEB_URL}
+  server-url: ${SERVER_URL}
 
 jwt:
   secret: ${SECRET}

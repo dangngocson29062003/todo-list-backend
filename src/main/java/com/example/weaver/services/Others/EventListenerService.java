@@ -15,6 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class EventListenerService {
     private final EmailVerificationTokenService emailService;
 
+
     //Use Outbox pattern in the future
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
