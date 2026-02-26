@@ -1,8 +1,7 @@
 package com.example.weaver.utils;
 
-import com.example.weaver.dtos.AuthUser;
-import com.example.weaver.models.User;
-import com.example.weaver.services.JwtService;
+import com.example.weaver.dtos.others.AuthUser;
+import com.example.weaver.services.Others.JwtService;
 import com.example.weaver.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

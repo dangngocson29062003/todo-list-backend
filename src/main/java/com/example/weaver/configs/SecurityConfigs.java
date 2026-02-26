@@ -1,6 +1,7 @@
 package com.example.weaver.configs;
 
 import com.example.weaver.utils.JwtAuthenticationFilter;
+import com.example.weaver.utils.OAuth2SuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +21,7 @@ public class SecurityConfigs {
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/**"};
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
     @Bean
     public SecurityFilterChain securityWebFilterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
@@ -27,6 +29,7 @@ public class SecurityConfigs {
                         requests.requestMatchers(ALLOWED_PATHS).permitAll()
                                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .oauth2Login(oauth->oauth.successHandler(oAuth2SuccessHandler))
                 .build();
     }
 }

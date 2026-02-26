@@ -1,6 +1,6 @@
 package com.example.weaver.exceptions;
 
-import com.example.weaver.dtos.ApiResponse;
+import com.example.weaver.dtos.others.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,18 +27,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<?>> handleValidationException(
             MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+        FieldError firstError = ex.getBindingResult().getFieldError();
 
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
+        String message = firstError != null
+                ? firstError.getDefaultMessage()
+                : "Validation error";
 
         return ResponseEntity.badRequest().body(
                 ApiResponse.error(
                         400,
                         "VALIDATION_ERROR",
-                        "Invalid request data",
-                        errors
+//                        "Invalid request data",
+                        message,
+                        null
                 )
         );
     }

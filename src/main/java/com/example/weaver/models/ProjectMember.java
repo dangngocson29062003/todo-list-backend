@@ -34,7 +34,7 @@ import java.util.UUID;
 @Builder
 public class ProjectMember {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)

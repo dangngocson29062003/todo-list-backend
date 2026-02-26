@@ -1,4 +1,4 @@
-package com.example.weaver.services;
+package com.example.weaver.services.Others;
 
 import com.example.weaver.models.User;
 import io.jsonwebtoken.Claims;

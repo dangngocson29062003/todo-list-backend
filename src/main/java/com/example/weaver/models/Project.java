@@ -19,7 +19,7 @@ import java.util.UUID;
 @Builder
 public class Project {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "created_by", nullable = false)

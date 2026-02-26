@@ -1,6 +1,6 @@
 package com.example.weaver.controllers;
 
-import com.example.weaver.dtos.AuthUser;
+import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.ProjectMemberRequest;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.services.AppService;
