@@ -26,7 +26,7 @@ public class TaskController {
     TaskService taskService;
 
     @GetMapping("/{projectId}/{taskId}")
-    public Task getTask(@PathVariable UUID projectId, @PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser){
+    public TaskResponse getTask(@PathVariable UUID projectId, @PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser){
         return taskService.getTask(taskId, projectId, authUser.getId());
     }
 
@@ -36,13 +36,7 @@ public class TaskController {
                                @RequestParam(required = false) TaskStatus status,
                                @RequestParam(required = false) Priority priority,
                                @RequestParam(required = false) TaskType type) {
-        List<Task> tasks = taskService.getTasks(projectId, authUser.getId(), status, priority, type);
-        List<TaskResponse> tasksResponse = new ArrayList<TaskResponse>();
-        for(Task task : tasks) {
-            TaskResponse taskResponse = new TaskResponse(task.getName(), task.getDescription(), task.getStartedAt(), task.getEndedAt(), task.getType(), task.getPriority(), task.getStatus(), task.getProject().getId(), task.getParent() != null ? task.getParent().getId() : null);
-            tasksResponse.add(taskResponse);
-        }
-        return tasksResponse;
+        return taskService.getTasks(projectId, authUser.getId(), status, priority, type);
     }
 
     @PostMapping

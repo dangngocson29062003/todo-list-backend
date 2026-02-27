@@ -2,6 +2,7 @@ package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.UpdateTaskRequest;
+import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
@@ -16,13 +17,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class TaskService {
+
     @Autowired
     TaskRepository taskRepository;
 
@@ -32,20 +31,18 @@ public class TaskService {
     @Autowired
     ProjectMemberRepository projectMemberRepository;
 
-    @Autowired
-    AppService appService;
-
-    public Task getTask(Long taskId, UUID projectID, UUID currentUserId){
+    public TaskResponse getTask(Long taskId, UUID projectID, UUID currentUserId){
         boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(projectID, currentUserId);
 
         if(!isMember) {
             throw new BadRequestException("Not a project member");
         }
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Not found"));
 
-        return taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Not found"));
+        return TaskResponse.toResponse(task);
     }
 
-    public List<Task> getTasks(
+    public List<TaskResponse> getTasks(
             UUID projectId,
             UUID currentUserId,
             TaskStatus status,
@@ -59,7 +56,13 @@ public class TaskService {
             throw new BadRequestException("Not a project member");
         }
 
-        return taskRepository.findByFilters(projectId, status, priority, type);
+
+        List<Task> tasks =  taskRepository.findByFilters(projectId, status, priority, type);
+        List<TaskResponse> tasksResponse = new ArrayList<TaskResponse>();
+        for(Task task : tasks) {
+            tasksResponse.add(TaskResponse.toResponse(task));
+        }
+        return tasksResponse;
     }
 
     public Task create(UUID projectId, UUID currentUserId, CreateTaskRequest createTaskRequest) {

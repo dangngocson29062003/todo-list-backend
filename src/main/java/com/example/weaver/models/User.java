@@ -49,6 +49,7 @@ public class User {
     private String providerId;
 
     private String avatarUrl;
+    private Boolean emailVerified;
 
     @CreationTimestamp
     private Instant createdAt;
