@@ -1,6 +1,6 @@
 package com.example.weaver.services;
 
-import com.example.weaver.dtos.others.EmailVerificationResult;
+import  com.example.weaver.dtos.others.EmailVerificationResult;
 import com.example.weaver.enums.UserStatus;
 import com.example.weaver.enums.EmailVerificationStatus;
 import com.example.weaver.exceptions.NotFoundException;

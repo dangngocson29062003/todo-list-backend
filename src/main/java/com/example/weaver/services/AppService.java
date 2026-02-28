@@ -4,7 +4,8 @@ import com.example.weaver.dtos.events.UserRegisteredEvent;
 import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.EmailVerificationResult;
-import com.example.weaver.dtos.responses.LoginResponse;
+import com.example.weaver.dtos.others.RevokeValidTokenResult;
+import com.example.weaver.dtos.others.TokenResult;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.dtos.responses.ProjectResponse;
 import com.example.weaver.enums.Role;
@@ -12,12 +13,17 @@ import com.example.weaver.enums.UserStatus;
 import com.example.weaver.enums.EmailVerificationStatus;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
+import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.User;
 import com.example.weaver.services.Others.JwtService;
-import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +31,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,30 +46,46 @@ public class AppService {
     private final ProjectMemberService projectMemberService;
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
     //USER
-    public LoginResponse login(String email, String password) {
-        Optional<User> user = userService.findByEmail(email);
-        if (user.isEmpty() || !passwordEncoder.matches(password, user.get().getPassword())) {
+    @Transactional
+    public TokenResult login(String email, String password, Boolean rememberMe,
+                             HttpServletRequest request) {
+        Optional<User> optionalUser = userService.findByEmail(email);
+        if (optionalUser.isEmpty() || !passwordEncoder.matches(password, optionalUser.get().getPassword())) {
             throw new BadRequestException("Invalid email or password");
         }
-        if (user.get().getStatus() != UserStatus.ACTIVE) {
-            if (user.get().getStatus() == UserStatus.PENDING) {
+        User user=optionalUser.get();
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            if (user.getStatus() == UserStatus.PENDING) {
                 if (emailService.checkIfTokenExpiredByEmail(email))
                     eventPublisher.publishEvent
-                            (new EmailVerificationExpiredEvent(user.get().getId(), email));
+                            (new EmailVerificationExpiredEvent(user.getId(), email));
 
                 throw new ForbiddenException("Please check your email for confirmation");
             } else {
                 throw new ForbiddenException("You are banned");
             }
         }
-        String accessToken = jwtService.generateAccessToken(user.get());
-        String refreshToken = jwtService.generateRefreshToken(user.get());
-        return new LoginResponse(accessToken, refreshToken);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken=UUID.randomUUID().toString();
+        String ip = extractIp(request);
+        String device = request.getHeader("User-Agent");
+
+        Instant now = Instant.now();
+        Instant expiryDate = Boolean.TRUE.equals(rememberMe)
+                ? now.plus(30, ChronoUnit.DAYS)
+                : now.plus(6, ChronoUnit.HOURS);
+        refreshTokenService.save(hashToken(refreshToken),user.getId(), expiryDate, ip,device);
+
+//        addRefreshTokenToCookie(refreshToken,expiryDate,response);
+
+        return new TokenResult(accessToken,refreshToken,expiryDate);
     }
 
     @Transactional
@@ -88,11 +111,28 @@ public class AppService {
         return result;
     }
 
-    public String getNewAccessToken(String refreshToken) {
-        Claims claims= jwtService.parseToken(refreshToken);
-        UUID userId = jwtService.getUserId(claims);
-        User user = userService.findById(userId);
-        return jwtService.generateAccessToken(user);
+    @Transactional
+    public TokenResult getNewAccessToken(String oldRefreshToken,
+                                  HttpServletRequest request) {
+        String hashedToken=hashToken(oldRefreshToken);
+        RevokeValidTokenResult result =refreshTokenService.revokeValidToken(hashedToken,Instant.now());
+        if (result== null) {
+            throw new InvalidTokenException();
+        }
+
+        User user= entityManager.getReference(User.class, result.userId());
+        String newRefreshToken=UUID.randomUUID().toString();
+        String ip = extractIp(request);
+        String device = request.getHeader("User-Agent");
+
+        refreshTokenService.save(hashToken(newRefreshToken),user.getId(),
+                result.expiryDate(),ip,device);
+
+//        addRefreshTokenToCookie(newRefreshToken,result.expiryDate(),response);
+
+        String accessToken= jwtService.generateAccessToken(user);
+        return new TokenResult(accessToken,newRefreshToken,result.expiryDate());
+
     }
 
     public UUID getCurrentUserId() {
@@ -200,4 +240,39 @@ public class AppService {
         return projectMemberResponses;
     }
 
+
+    ////////////////////////
+    public String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of()
+                    .formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private String extractIp(HttpServletRequest request) {
+        String header = request.getHeader("X-Forwarded-For");
+        if (header != null && !header.isBlank()) {
+            return header.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+    public void addRefreshTokenToCookie(String refreshToken,
+                                         Instant expiryDate,
+                                         HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) ///////////set true when not on local dev
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(cookieMaxAge(expiryDate))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+    private Duration cookieMaxAge(Instant expiryDate) {
+        Duration duration = Duration.between(Instant.now(), expiryDate);
+        return duration.isNegative() ? Duration.ZERO : duration;
+    }
 }
