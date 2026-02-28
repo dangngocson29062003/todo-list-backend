@@ -19,15 +19,15 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/tasks")
 public class TaskController {
 
     @Autowired
     TaskService taskService;
 
-    @GetMapping("/{projectId}/{taskId}")
-    public TaskResponse getTask(@PathVariable UUID projectId, @PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser){
-        return taskService.getTask(taskId, projectId, authUser.getId());
+    @GetMapping("/{id}")
+    public TaskResponse getTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
+        return taskService.getTask(id, authUser.getId());
     }
 
     @GetMapping
@@ -44,8 +44,13 @@ public class TaskController {
         return taskService.create(request.getProjectId(), authUser.getId(), request);
     }
 
-    @PutMapping("/{projectId}/{taskId}")
-    public Task updateTask(@Valid @RequestBody UpdateTaskRequest request, @PathVariable UUID projectId, @PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser) {
-        return taskService.update(projectId, taskId, authUser.getId(), request);
+    @PutMapping("/{id}")
+    public Task updateTask(@Valid @RequestBody UpdateTaskRequest request, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
+        return taskService.update(id, authUser.getId(), request);
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
+        return taskService.delete(id, authUser.getId());
     }
 }

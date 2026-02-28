@@ -4,11 +4,13 @@ import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.UpdateTaskRequest;
 import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.Priority;
+import com.example.weaver.enums.Role;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Project;
+import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.Task;
 import com.example.weaver.repositories.ProjectMemberRepository;
 import com.example.weaver.repositories.ProjectRepository;
@@ -31,13 +33,15 @@ public class TaskService {
     @Autowired
     ProjectMemberRepository projectMemberRepository;
 
-    public TaskResponse getTask(Long taskId, UUID projectID, UUID currentUserId){
-        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(projectID, currentUserId);
+    public TaskResponse getTask(Long id, UUID currentUserId){
+
+        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
+
+        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(task.getProject().getId(), currentUserId);
 
         if(!isMember) {
             throw new BadRequestException("Not a project member");
         }
-        Task task = taskRepository.findById(taskId).orElseThrow(() -> new NotFoundException("Not found"));
 
         return TaskResponse.toResponse(task);
     }
@@ -97,16 +101,16 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task update(UUID projectId, Long taskId, UUID currentUserId, UpdateTaskRequest updateTaskRequest){
+    public Task update(Long id, UUID currentUserId, UpdateTaskRequest updateTaskRequest){
+
+        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
+
         boolean isMember = projectMemberRepository
-                .existsByProject_IdAndUser_Id(projectId, currentUserId);
+                .existsByProject_IdAndUser_Id(task.getProject().getId(), currentUserId);
 
         if (!isMember) {
             throw new BadRequestException("Not a project member");
         }
-
-        Task task = taskRepository
-                .findByIdAndProject_Id(taskId, projectId);
 
         if (updateTaskRequest.getName() != null) {
             task.setName(updateTaskRequest.getName());
@@ -142,4 +146,19 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    public String delete(Long id, UUID userId) {
+        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
+
+        ProjectMember assigner = projectMemberRepository
+                .findByProject_IdAndUser_Id(task.getProject().getId(), userId)
+                .orElseThrow(() -> new BadRequestException("You are not a project member"));
+
+        if (assigner.getRole() != Role.MANAGER) {
+            throw new BadRequestException("You don't have permission to delete task");
+        }
+
+        taskRepository.delete(task);
+
+        return "Deleted successfully";
+    }
 }

@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/assignments/")
+@RequestMapping("/assignments")
 public class TaskAssignmentController {
 
     @Autowired
@@ -21,4 +23,8 @@ public class TaskAssignmentController {
         return taskAssignmentService.assign(request, authUser.getId());
     }
 
+    @PutMapping("/{id}")
+    public TaskAssignmentResponse update(@Valid @PathVariable Long id, @RequestBody UUID userId, @AuthenticationPrincipal AuthUser authUser){
+        return taskAssignmentService.update(id, userId, authUser.getId());
+    }
 }

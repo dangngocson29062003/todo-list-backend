@@ -27,5 +27,4 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             TaskType type
     );
 
-    Task findByIdAndProject_Id(Long taskId, UUID projectId);
 }
