@@ -35,8 +35,23 @@ public class TaskResponse {
 
     private Long parentId;
 
-    public static TaskResponse toResponse(Task task){
-        return new TaskResponse(task.getId(),
+    private List<TaskAssignmentResponse> assignees;
+
+    private List<SubtaskResponse> subtasks;
+
+    public static TaskResponse toResponse(Task task) {
+        List<TaskAssignmentResponse> assignees = task.getAssignments() != null
+                ? task.getAssignments().stream()
+                .map(TaskAssignmentResponse::toResponse)
+                .toList()
+                : List.of();
+        List<SubtaskResponse> subtasks = task.getChildren() != null
+                ? task.getChildren().stream()
+                .map(SubtaskResponse::toResponse)
+                .toList()
+                : List.of();
+        return new TaskResponse(
+                task.getId(),
                 task.getName(),
                 task.getDescription(),
                 task.getStartedAt(),
@@ -44,8 +59,10 @@ public class TaskResponse {
                 task.getType(),
                 task.getPriority(),
                 task.getStatus(),
-                task.getProject().getId(),
-                task.getParent() != null ? task.getParent().getId() : null);
+                task.getProject() != null ? task.getProject().getId() : null,
+                task.getParent() != null ? task.getParent().getId() : null,
+                assignees,
+                subtasks
+        );
     }
-
 }

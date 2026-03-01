@@ -15,6 +15,7 @@ import com.example.weaver.models.Task;
 import com.example.weaver.repositories.ProjectMemberRepository;
 import com.example.weaver.repositories.ProjectRepository;
 import com.example.weaver.repositories.TaskRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,13 +61,10 @@ public class TaskService {
             throw new BadRequestException("Not a project member");
         }
 
-
-        List<Task> tasks =  taskRepository.findByFilters(projectId, status, priority, type);
-        List<TaskResponse> tasksResponse = new ArrayList<TaskResponse>();
-        for(Task task : tasks) {
-            tasksResponse.add(TaskResponse.toResponse(task));
-        }
-        return tasksResponse;
+        return taskRepository.findByFilters(projectId, status, priority, type)
+                .stream()
+                .map(TaskResponse::toResponse)
+                .toList();
     }
 
     public Task create(UUID projectId, UUID currentUserId, CreateTaskRequest createTaskRequest) {

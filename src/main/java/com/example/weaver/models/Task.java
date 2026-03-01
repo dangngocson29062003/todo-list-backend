@@ -11,7 +11,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -70,7 +72,7 @@ public class Task {
 
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     @JsonIgnore
-    private Set<Task> children = new HashSet<>();
+    private List<Task> children = new ArrayList<>();
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
     @JsonIgnore
@@ -81,6 +83,5 @@ public class Task {
     private Set<Comment> comments = new HashSet<>();
 
     @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Set<TaskAssignment> assignments = new HashSet<>();
+    private List<TaskAssignment> assignments = new ArrayList<>();
 }

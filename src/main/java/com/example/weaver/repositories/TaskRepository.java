@@ -14,8 +14,12 @@ import java.util.UUID;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("""
-    SELECT t FROM tasks t
+    SELECT DISTINCT t FROM tasks t
+    LEFT JOIN FETCH t.assignments a
+    LEFT JOIN FETCH a.user
+    LEFT JOIN FETCH a.assignedBy
     WHERE t.project.id = :projectId
+    AND t.parent IS NULL
     AND (:status IS NULL OR t.status = :status)
     AND (:priority IS NULL OR t.priority = :priority)
     AND (:type IS NULL OR t.type = :type)
