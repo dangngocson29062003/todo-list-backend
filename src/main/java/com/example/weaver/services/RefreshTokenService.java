@@ -50,11 +50,15 @@ public class RefreshTokenService {
         refreshTokenRepository.forceLogoutOtherSessions(userId,hashedToken);
     }
 
-    public RevokeValidTokenResult revokeValidToken(String hashedToken, Instant expiryDate) {
+    public int revokeValidToken(String hashedToken, Instant expiryDate) {
         return refreshTokenRepository.revokeValidToken(hashedToken, expiryDate);
     }
 
     public void saveAll(List<RefreshToken> tokensToUpdate) {
         refreshTokenRepository.saveAll(tokensToUpdate);
+    }
+
+    public void deleteByExpiryDateBefore(Instant now) {
+        refreshTokenRepository.deleteByExpiryDateBefore(now);
     }
 }

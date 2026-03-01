@@ -35,11 +35,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
             WHERE hashed_token = :hashedToken
               AND revoked = false
               AND expiry_date > :now
-            RETURNING user_id AS userId,
-                      expiry_date AS expiryDate
             """,
             nativeQuery = true)
-    RevokeValidTokenResult revokeValidToken(
+    int revokeValidToken(
             @Param("hashedToken") String hashedToken,
             @Param("now") Instant now);
 
@@ -64,5 +62,7 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
             @Param("userId") UUID userId,
             @Param("hashedToken") String hashedToken
     );
+
+    void deleteByExpiryDateBefore(Instant expiryDate);
 
 }
