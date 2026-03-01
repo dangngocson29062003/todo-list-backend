@@ -45,6 +45,9 @@ public class RefreshToken {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Column(name = "last_used_at")
+    private Instant lastUsedAt;
+
     // ===== location / device tracking =====
 
     @Column(name = "ip_address", length = 45)
@@ -53,6 +56,7 @@ public class RefreshToken {
     @Column(name = "device_info", length = 255)
     private String deviceInfo;
 
-//    @Column(name = "location", length = 255)
-//    private String location;
+    private String city;
+    private String country;
+
 }

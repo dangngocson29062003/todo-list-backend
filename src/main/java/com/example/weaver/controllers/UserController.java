@@ -1,21 +1,22 @@
 package com.example.weaver.controllers;
 
-import com.example.weaver.dtos.others.EmailVerificationResult;
-import com.example.weaver.dtos.others.TokenResult;
+import com.example.weaver.dtos.others.AuthUser;
+import com.example.weaver.dtos.others.results.EmailVerificationResult;
+import com.example.weaver.dtos.others.results.TokenResult;
 import com.example.weaver.dtos.requests.LoginRequest;
-import com.example.weaver.dtos.requests.RefreshTokenRequest;
 import com.example.weaver.dtos.requests.RegisterRequest;
-import com.example.weaver.dtos.responses.LoginResponse;
-import com.example.weaver.models.User;
+import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.services.AppService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -60,7 +61,7 @@ public class UserController {
     }
 
     @PostMapping("/refresh")
-    public String refresh(@CookieValue("refreshToken") String refreshToken,
+    public String refresh(@CookieValue(value = "refreshToken",required = false) String refreshToken,
                           HttpServletRequest request,
                           HttpServletResponse response) throws IOException {
         TokenResult tokenResult= appService.getNewAccessToken(refreshToken, request);
@@ -69,6 +70,10 @@ public class UserController {
                 tokenResult.expiryDate(), response);
 
         return tokenResult.accessToken();
+    }
+    @GetMapping("/sessions")
+    public List<ActiveSessionResponse> getActiveSessions(@AuthenticationPrincipal AuthUser authUser) {
+        return appService.getActiveSession(authUser.getId());
     }
 
 }

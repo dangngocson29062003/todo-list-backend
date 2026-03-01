@@ -3,9 +3,11 @@ package com.example.weaver.services;
 import com.example.weaver.dtos.events.UserRegisteredEvent;
 import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
 import com.example.weaver.dtos.others.AuthUser;
-import com.example.weaver.dtos.others.EmailVerificationResult;
-import com.example.weaver.dtos.others.RevokeValidTokenResult;
-import com.example.weaver.dtos.others.TokenResult;
+import com.example.weaver.dtos.others.results.EmailVerificationResult;
+import com.example.weaver.dtos.others.results.LocationResult;
+import com.example.weaver.dtos.others.results.RevokeValidTokenResult;
+import com.example.weaver.dtos.others.results.TokenResult;
+import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.dtos.responses.ProjectResponse;
 import com.example.weaver.enums.Role;
@@ -16,7 +18,9 @@ import com.example.weaver.exceptions.ForbiddenException;
 import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
+import com.example.weaver.models.RefreshToken;
 import com.example.weaver.models.User;
+import com.example.weaver.services.Others.IpLocationService;
 import com.example.weaver.services.Others.JwtService;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +42,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import static org.springframework.util.function.SupplierUtils.resolve;
+
 @Service
 @RequiredArgsConstructor
 public class AppService {
@@ -51,6 +57,7 @@ public class AppService {
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
     private final EntityManager entityManager;
+    private final IpLocationService ipLocationService;
 
     //USER
     @Transactional
@@ -114,6 +121,9 @@ public class AppService {
     @Transactional
     public TokenResult getNewAccessToken(String oldRefreshToken,
                                   HttpServletRequest request) {
+        if(oldRefreshToken==null){
+            throw new InvalidTokenException();
+        }
         String hashedToken=hashToken(oldRefreshToken);
         RevokeValidTokenResult result =refreshTokenService.revokeValidToken(hashedToken,Instant.now());
         if (result== null) {
@@ -133,6 +143,69 @@ public class AppService {
         String accessToken= jwtService.generateAccessToken(user);
         return new TokenResult(accessToken,newRefreshToken,result.expiryDate());
 
+    }
+
+    public List<ActiveSessionResponse> getActiveSession(UUID userId) {
+        List<RefreshToken> activeSessions = refreshTokenService.getActiveSessions(userId);
+
+        List<ActiveSessionResponse> responses = new ArrayList<>();
+        Set<String> ipsNeedToResolve = new HashSet<>();
+
+        // Map IP -> tokens (many sessions can share same IP)
+        Map<String, List<RefreshToken>> tokensByIp = new HashMap<>();
+
+        for (RefreshToken session : activeSessions) {
+            tokensByIp.computeIfAbsent(session.getIpAddress(), k -> new ArrayList<>())
+                    .add(session);
+
+            if (session.getCity()==null) {
+                ipsNeedToResolve.add(session.getIpAddress());
+            }
+        }
+
+        Map<String, LocationResult> locationResultMap = Map.of();
+
+        if (!ipsNeedToResolve.isEmpty()) {
+            locationResultMap = ipLocationService.resolve(new ArrayList<>(ipsNeedToResolve));
+        }
+
+        List<RefreshToken> tokensToUpdate = new ArrayList<>();
+        for (Map.Entry<String, LocationResult> entry : locationResultMap.entrySet()) {
+            String ip = entry.getKey();
+            LocationResult loc = entry.getValue();
+            if (loc == null) {
+                continue;
+            }
+
+            List<RefreshToken> tokens = tokensByIp.get(ip);
+            if (tokens == null) continue;
+
+            for (RefreshToken token : tokens) {
+                if (token.getCity()==null) {
+                    token.setCity(loc.city());
+                    token.setCountry(loc.country());
+                    tokensToUpdate.add(token);
+                }
+            }
+        }
+
+        if (!tokensToUpdate.isEmpty()) {
+            refreshTokenService.saveAll(tokensToUpdate);
+        }
+
+        for (RefreshToken session : activeSessions) {
+            String location = "Unknown";
+            if (session.getCity() != null && session.getCountry() != null) {
+                location = session.getCity() + ", " + session.getCountry();
+            }
+            responses.add(new ActiveSessionResponse(
+                    location,
+                    session.getDeviceInfo(),
+                    session.getLastUsedAt()
+            ));
+        }
+
+        return responses;
     }
 
     public UUID getCurrentUserId() {

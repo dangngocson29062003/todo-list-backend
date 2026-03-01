@@ -1,18 +1,19 @@
 package com.example.weaver.services;
 
-import com.example.weaver.dtos.others.RevokeValidTokenResult;
+import com.example.weaver.dtos.others.results.LocationResult;
+import com.example.weaver.dtos.others.results.RevokeValidTokenResult;
+import com.example.weaver.dtos.others.results.ActiveSessionsResult;
+import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.RefreshToken;
 import com.example.weaver.models.User;
 import com.example.weaver.repositories.RefreshTokenRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -45,8 +46,15 @@ public class RefreshTokenService {
     public RefreshToken findByToken(String token) {
         return refreshTokenRepository.findByToken(token).orElseThrow(InvalidTokenException::new);
     }
+    public List<RefreshToken> getActiveSessions(UUID userId) {
+        return refreshTokenRepository.getActiveSessions(userId);
+    }
 
     public RevokeValidTokenResult revokeValidToken(String token, Instant expiryDate) {
         return refreshTokenRepository.revokeValidToken(token, expiryDate);
+    }
+
+    public void saveAll(List<RefreshToken> tokensToUpdate) {
+        refreshTokenRepository.saveAll(tokensToUpdate);
     }
 }
