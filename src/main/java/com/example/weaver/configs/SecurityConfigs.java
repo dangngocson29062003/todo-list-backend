@@ -25,8 +25,7 @@ public class SecurityConfigs {
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
-            "/users/login",
-            "/users/register"};
+            "/users/login", "/users/register","/users/refresh"};
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 

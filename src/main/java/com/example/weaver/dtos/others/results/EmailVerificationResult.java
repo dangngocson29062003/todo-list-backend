@@ -1,4 +1,4 @@
-package com.example.weaver.dtos.others;
+package com.example.weaver.dtos.others.results;
 
 import com.example.weaver.enums.EmailVerificationStatus;
 import java.util.UUID;
