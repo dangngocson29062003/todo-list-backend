@@ -10,7 +10,7 @@ import java.time.Instant;
 @Table(
         name = "refresh_tokens",
         indexes = {
-//                @Index(name = "idx_refresh_token", columnList = "token"),
+//                @Index(name = "idx_refresh_token", columnList = "token_hash"),
                 @Index(name = "idx_refresh_user", columnList = "user_id"),
                 @Index(name = "idx_refresh_expiry", columnList = "expiry_date"),
                 @Index(name = "idx_refresh_user_revoked", columnList = "user_id, revoked")
@@ -28,8 +28,8 @@ public class RefreshToken {
 
     // store HASHED token
     // unique already create index
-    @Column(nullable = false, unique = true, length = 256)
-    private String token;
+    @Column(name="hashed_token", nullable = false, unique = true, length = 256)
+    private String hashedToken;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

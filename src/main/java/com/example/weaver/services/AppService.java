@@ -86,7 +86,7 @@ public class AppService {
 
         Instant now = Instant.now();
         Instant expiryDate = Boolean.TRUE.equals(rememberMe)
-                ? now.plus(30, ChronoUnit.DAYS)
+                ? now.plus(7, ChronoUnit.DAYS)
                 : now.plus(6, ChronoUnit.HOURS);
         refreshTokenService.save(hashToken(refreshToken),user.getId(), expiryDate, ip,device);
 
@@ -206,6 +206,14 @@ public class AppService {
         }
 
         return responses;
+    }
+
+    public void forceLogoutOtherSessions(UUID userId,String refreshToken){
+        if(refreshToken==null){
+            throw new InvalidTokenException();
+        }
+        refreshTokenService.forceLogoutOtherSessions(userId,hashToken(refreshToken));
+
     }
 
     public UUID getCurrentUserId() {

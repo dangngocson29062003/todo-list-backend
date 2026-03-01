@@ -75,6 +75,11 @@ public class UserController {
     public List<ActiveSessionResponse> getActiveSessions(@AuthenticationPrincipal AuthUser authUser) {
         return appService.getActiveSession(authUser.getId());
     }
+    @PostMapping("/force-logout")
+    public void forceLogoutOtherSessions(@AuthenticationPrincipal AuthUser authUser,
+                            @CookieValue(value = "refreshToken",required = false) String refreshToken) {
+        appService.forceLogoutOtherSessions(authUser.getId(),refreshToken);
+    }
 
 }
 

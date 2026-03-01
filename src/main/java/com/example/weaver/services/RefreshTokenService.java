@@ -1,9 +1,6 @@
 package com.example.weaver.services;
 
-import com.example.weaver.dtos.others.results.LocationResult;
 import com.example.weaver.dtos.others.results.RevokeValidTokenResult;
-import com.example.weaver.dtos.others.results.ActiveSessionsResult;
-import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.RefreshToken;
 import com.example.weaver.models.User;
@@ -26,7 +23,7 @@ public class RefreshTokenService {
         checkIfExceedTokenLimit(userId);
         User user=entityManager.getReference(User.class,userId);
         RefreshToken refreshToken=RefreshToken.builder()
-                .token(hashedToken)
+                .hashedToken(hashedToken)
                 .user(user)
                 .expiryDate(expiryDate)
                 .ipAddress(ipAddress)
@@ -43,15 +40,18 @@ public class RefreshTokenService {
         }
     }
 
-    public RefreshToken findByToken(String token) {
-        return refreshTokenRepository.findByToken(token).orElseThrow(InvalidTokenException::new);
+    public RefreshToken findByToken(String hashedToken) {
+        return refreshTokenRepository.findByHashedToken(hashedToken).orElseThrow(InvalidTokenException::new);
     }
     public List<RefreshToken> getActiveSessions(UUID userId) {
         return refreshTokenRepository.getActiveSessions(userId);
     }
+    public void forceLogoutOtherSessions(UUID userId,String hashedToken) {
+        refreshTokenRepository.forceLogoutOtherSessions(userId,hashedToken);
+    }
 
-    public RevokeValidTokenResult revokeValidToken(String token, Instant expiryDate) {
-        return refreshTokenRepository.revokeValidToken(token, expiryDate);
+    public RevokeValidTokenResult revokeValidToken(String hashedToken, Instant expiryDate) {
+        return refreshTokenRepository.revokeValidToken(hashedToken, expiryDate);
     }
 
     public void saveAll(List<RefreshToken> tokensToUpdate) {
