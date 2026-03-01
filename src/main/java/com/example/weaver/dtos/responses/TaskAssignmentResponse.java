@@ -13,21 +13,19 @@ import java.util.UUID;
 @NoArgsConstructor
 public class TaskAssignmentResponse {
 
-    private Long id;
-
-    private Long taskId;
-
     private UUID userId;
-
+    private String fullName;
+    private String email;
+    private Instant assignedAt;
     private UUID assignedBy;
 
-    private Instant assignedAt;
-
-    public static TaskAssignmentResponse toResponse(TaskAssignment taskAssignment) {
-        return new TaskAssignmentResponse(taskAssignment.getId(),
-                taskAssignment.getTask().getId(),
-                taskAssignment.getUser().getId(),
-                taskAssignment.getAssignedBy().getId(),
-                taskAssignment.getAssignedAt());
+    public static TaskAssignmentResponse toResponse(TaskAssignment assignment) {
+        return new TaskAssignmentResponse(
+                assignment.getUser().getId(),
+                assignment.getUser().getFullName(),
+                assignment.getUser().getEmail(),
+                assignment.getAssignedAt(),
+                assignment.getAssignedBy() != null ? assignment.getAssignedBy().getId() : null
+        );
     }
 }

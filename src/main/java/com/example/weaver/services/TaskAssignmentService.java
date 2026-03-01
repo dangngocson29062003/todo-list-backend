@@ -2,6 +2,7 @@ package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
 import com.example.weaver.dtos.responses.TaskAssignmentResponse;
+import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.Role;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.NotFoundException;
@@ -16,7 +17,10 @@ import com.example.weaver.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskAssignmentService {
@@ -33,12 +37,9 @@ public class TaskAssignmentService {
     @Autowired
     ProjectMemberRepository projectMemberRepository;
 
-    public TaskAssignmentResponse assign(TaskAssignmentRequest request, UUID assignedBy) {
-        Task task = taskRepository.findById(request.getTaskId())
+    public TaskResponse assign(Long id, TaskAssignmentRequest request, UUID assignedBy) {
+        Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Task not found"));
-
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NotFoundException("User not found"));
 
         ProjectMember assigner = projectMemberRepository
                 .findByProject_IdAndUser_Id(task.getProject().getId(), assignedBy)
@@ -48,22 +49,43 @@ public class TaskAssignmentService {
             throw new BadRequestException("You don't have permission to assign task");
         }
 
-        boolean isMember = projectMemberRepository
-                .existsByProject_IdAndUser_Id(task.getProject().getId(), request.getUserId());
+        List<UUID> projectMemberIds = projectMemberRepository
+                .findAllByProject_Id(task.getProject().getId())
+                .stream()
+                .map(member -> member.getUser().getId())
+                .toList();
 
-        if (!isMember) {
-            throw new BadRequestException("User is not a project member");
+        List<UUID> invalidIds = request.getUserId().stream()
+                .filter(userId -> !projectMemberIds.contains(userId))
+                .toList();
+
+        if (!invalidIds.isEmpty()) {
+            throw new BadRequestException("Some users are not project members: " + invalidIds);
         }
-        TaskAssignment assignment = TaskAssignment.builder()
-                .task(task)
-                .user(user)
-                .assignedBy(assigner.getUser())
-                .build();
 
-        taskAssignmentRepository.save(assignment);
+        List<UUID> alreadyAssignedIds = taskAssignmentRepository.findAllByTask_Id(id)
+                .stream()
+                .map(ta -> ta.getUser().getId())
+                .toList();
 
-        return TaskAssignmentResponse.toResponse(assignment);
+        List<TaskAssignment> newAssignments = request.getUserId().stream()
+                .filter(userId -> !alreadyAssignedIds.contains(userId))
+                .map(userId -> {
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new NotFoundException("User not found: " + userId));
+                    return TaskAssignment.builder()
+                            .task(task)
+                            .user(user)
+                            .assignedBy(assigner.getUser())
+                            .build();
+                })
+                .toList();
+
+        taskAssignmentRepository.saveAll(newAssignments);
+
+        return TaskResponse.toResponse(task);
     }
+
     public TaskAssignmentResponse update(Long id, UUID userId, UUID assignedBy){
         Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
 
