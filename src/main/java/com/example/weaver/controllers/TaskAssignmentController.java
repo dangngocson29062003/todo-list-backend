@@ -4,6 +4,7 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
 import com.example.weaver.dtos.responses.TaskAssignmentResponse;
 import com.example.weaver.dtos.responses.TaskResponse;
+import com.example.weaver.services.AppService;
 import com.example.weaver.services.TaskAssignmentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,15 +19,15 @@ import java.util.UUID;
 public class TaskAssignmentController {
 
     @Autowired
-    TaskAssignmentService taskAssignmentService;
+    private AppService appService;
 
     @PostMapping
     public TaskResponse assign(@PathVariable Long id, @RequestBody TaskAssignmentRequest request, @AuthenticationPrincipal AuthUser authUser) {
-        return taskAssignmentService.assign(id, request, authUser.getId());
+        return appService.assignTask(id, request, authUser.getId());
     }
 
     @PutMapping()
-    public TaskAssignmentResponse update(@Valid @PathVariable Long id, @RequestBody UUID userId, @AuthenticationPrincipal AuthUser authUser){
-        return taskAssignmentService.update(id, userId, authUser.getId());
+    public TaskAssignmentResponse unassign(@Valid @PathVariable Long id, @RequestBody UUID userId, @AuthenticationPrincipal AuthUser authUser){
+        return appService.unassignTask(id, userId, authUser.getId());
     }
 }

@@ -37,17 +37,7 @@ public class TaskAssignmentService {
     @Autowired
     ProjectMemberRepository projectMemberRepository;
 
-    public TaskResponse assign(Long id, TaskAssignmentRequest request, UUID assignedBy) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Task not found"));
-
-        ProjectMember assigner = projectMemberRepository
-                .findByProject_IdAndUser_Id(task.getProject().getId(), assignedBy)
-                .orElseThrow(() -> new BadRequestException("You are not a project member"));
-
-        if (assigner.getRole() != Role.MANAGER) {
-            throw new BadRequestException("You don't have permission to assign task");
-        }
+    public void assign(Task task, TaskAssignmentRequest request, User assigner) {
 
         List<UUID> projectMemberIds = projectMemberRepository
                 .findAllByProject_Id(task.getProject().getId())
@@ -63,7 +53,7 @@ public class TaskAssignmentService {
             throw new BadRequestException("Some users are not project members: " + invalidIds);
         }
 
-        List<UUID> alreadyAssignedIds = taskAssignmentRepository.findAllByTask_Id(id)
+        List<UUID> alreadyAssignedIds = taskAssignmentRepository.findAllByTask_Id(task.getId())
                 .stream()
                 .map(ta -> ta.getUser().getId())
                 .toList();
@@ -76,14 +66,13 @@ public class TaskAssignmentService {
                     return TaskAssignment.builder()
                             .task(task)
                             .user(user)
-                            .assignedBy(assigner.getUser())
+                            .assignedBy(assigner)
                             .build();
                 })
                 .toList();
 
         taskAssignmentRepository.saveAll(newAssignments);
 
-        return TaskResponse.toResponse(task);
     }
 
     public TaskAssignmentResponse update(Long id, UUID userId, UUID assignedBy){

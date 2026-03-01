@@ -8,6 +8,7 @@ import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
 import com.example.weaver.models.Task;
+import com.example.weaver.services.AppService;
 import com.example.weaver.services.TaskService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,11 +24,11 @@ import java.util.UUID;
 public class TaskController {
 
     @Autowired
-    TaskService taskService;
+    private AppService appService;
 
     @GetMapping("/{id}")
     public TaskResponse getTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
-        return taskService.getTask(id, authUser.getId());
+        return appService.getTask(id, authUser.getId());
     }
 
     @GetMapping
@@ -36,21 +37,21 @@ public class TaskController {
                                @RequestParam(required = false) TaskStatus status,
                                @RequestParam(required = false) Priority priority,
                                @RequestParam(required = false) TaskType type) {
-        return taskService.getTasks(projectId, authUser.getId(), status, priority, type);
+        return appService.getTasks(projectId, authUser.getId(), status, priority, type);
     }
 
     @PostMapping
-    public Task createTask(@Valid @RequestBody CreateTaskRequest request, @AuthenticationPrincipal AuthUser authUser) {
-        return taskService.create(request.getProjectId(), authUser.getId(), request);
+    public TaskResponse createTask(@Valid @RequestBody CreateTaskRequest request, @AuthenticationPrincipal AuthUser authUser) {
+        return appService.createTask(request.getProjectId(), authUser.getId(), request);
     }
 
     @PutMapping("/{id}")
-    public Task updateTask(@Valid @RequestBody UpdateTaskRequest request, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
-        return taskService.update(id, authUser.getId(), request);
+    public TaskResponse updateTask(@Valid @RequestBody UpdateTaskRequest request, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
+        return appService.updateTask(id, authUser.getId(), request);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
-        return taskService.delete(id, authUser.getId());
+    public void deleteTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser) {
+        appService.deleteTask(id, authUser.getId());
     }
 }
