@@ -125,23 +125,25 @@ public class AppService {
             throw new InvalidTokenException();
         }
         String hashedToken=hashToken(oldRefreshToken);
-        RevokeValidTokenResult result =refreshTokenService.revokeValidToken(hashedToken,Instant.now());
-        if (result== null) {
+        RefreshToken refreshToken=refreshTokenService.findByToken(hashedToken);
+
+        int result =refreshTokenService.revokeValidToken(hashedToken,Instant.now());
+        if (result== 0) {
             throw new InvalidTokenException();
         }
 
-        User user= entityManager.getReference(User.class, result.userId());
+        User user= entityManager.getReference(User.class, refreshToken.getUser().getId());
         String newRefreshToken=UUID.randomUUID().toString();
         String ip = extractIp(request);
         String device = request.getHeader("User-Agent");
 
         refreshTokenService.save(hashToken(newRefreshToken),user.getId(),
-                result.expiryDate(),ip,device);
+                refreshToken.getExpiryDate(),ip,device);
 
 //        addRefreshTokenToCookie(newRefreshToken,result.expiryDate(),response);
 
         String accessToken= jwtService.generateAccessToken(user);
-        return new TokenResult(accessToken,newRefreshToken,result.expiryDate());
+        return new TokenResult(accessToken,newRefreshToken,refreshToken.getExpiryDate());
 
     }
 
@@ -208,6 +210,7 @@ public class AppService {
         return responses;
     }
 
+    @Transactional
     public void forceLogoutOtherSessions(UUID userId,String refreshToken){
         if(refreshToken==null){
             throw new InvalidTokenException();

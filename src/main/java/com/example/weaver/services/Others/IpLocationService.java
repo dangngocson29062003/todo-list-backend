@@ -7,6 +7,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,9 +77,14 @@ public class IpLocationService {
     }
 
     private boolean isPublicIp(String ip) {
-        return !(ip.startsWith("192.168.")
-                || ip.startsWith("10.")
-                || ip.startsWith("127.")
-                || ip.startsWith("172.16."));
+        try {
+            InetAddress address = InetAddress.getByName(ip);
+
+            return !(address.isAnyLocalAddress()     // 0.0.0.0 / ::
+                    || address.isLoopbackAddress()     // 127.0.0.1 / ::1
+                    || address.isSiteLocalAddress());  // private ranges
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
