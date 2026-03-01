@@ -61,8 +61,5 @@ public class JwtService {
     public String getEmail(Claims claims) {
         return claims.get("email", String.class);
     }
-    public boolean isExpired(String token) {
-        return parseToken(token).getExpiration().before(new Date());
-    }
 
 }

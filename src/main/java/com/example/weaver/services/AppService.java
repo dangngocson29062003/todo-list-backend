@@ -3,8 +3,11 @@ package com.example.weaver.services;
 import com.example.weaver.dtos.events.UserRegisteredEvent;
 import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
 import com.example.weaver.dtos.others.AuthUser;
-import com.example.weaver.dtos.others.EmailVerificationResult;
-import com.example.weaver.dtos.responses.LoginResponse;
+import com.example.weaver.dtos.others.results.EmailVerificationResult;
+import com.example.weaver.dtos.others.results.LocationResult;
+import com.example.weaver.dtos.others.results.RevokeValidTokenResult;
+import com.example.weaver.dtos.others.results.TokenResult;
+import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.dtos.responses.ProjectResponse;
 import com.example.weaver.enums.Role;
@@ -12,12 +15,19 @@ import com.example.weaver.enums.UserStatus;
 import com.example.weaver.enums.EmailVerificationStatus;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
+import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
+import com.example.weaver.models.RefreshToken;
 import com.example.weaver.models.User;
+import com.example.weaver.services.Others.IpLocationService;
 import com.example.weaver.services.Others.JwtService;
-import io.jsonwebtoken.Claims;
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,11 +35,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+
+import static org.springframework.util.function.SupplierUtils.resolve;
 
 @Service
 @RequiredArgsConstructor
@@ -39,30 +52,47 @@ public class AppService {
     private final ProjectMemberService projectMemberService;
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
+    private final IpLocationService ipLocationService;
 
     //USER
-    public LoginResponse login(String email, String password) {
-        Optional<User> user = userService.findByEmail(email);
-        if (user.isEmpty() || !passwordEncoder.matches(password, user.get().getPassword())) {
+    @Transactional
+    public TokenResult login(String email, String password, Boolean rememberMe,
+                             HttpServletRequest request) {
+        Optional<User> optionalUser = userService.findByEmail(email);
+        if (optionalUser.isEmpty() || !passwordEncoder.matches(password, optionalUser.get().getPassword())) {
             throw new BadRequestException("Invalid email or password");
         }
-        if (user.get().getStatus() != UserStatus.ACTIVE) {
-            if (user.get().getStatus() == UserStatus.PENDING) {
+        User user=optionalUser.get();
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            if (user.getStatus() == UserStatus.PENDING) {
                 if (emailService.checkIfTokenExpiredByEmail(email))
                     eventPublisher.publishEvent
-                            (new EmailVerificationExpiredEvent(user.get().getId(), email));
+                            (new EmailVerificationExpiredEvent(user.getId(), email));
 
                 throw new ForbiddenException("Please check your email for confirmation");
             } else {
                 throw new ForbiddenException("You are banned");
             }
         }
-        String accessToken = jwtService.generateAccessToken(user.get());
-        String refreshToken = jwtService.generateRefreshToken(user.get());
-        return new LoginResponse(accessToken, refreshToken);
+        String accessToken = jwtService.generateAccessToken(user);
+        String refreshToken=UUID.randomUUID().toString();
+        String ip = extractIp(request);
+        String device = request.getHeader("User-Agent");
+
+        Instant now = Instant.now();
+        Instant expiryDate = Boolean.TRUE.equals(rememberMe)
+                ? now.plus(7, ChronoUnit.DAYS)
+                : now.plus(6, ChronoUnit.HOURS);
+        refreshTokenService.save(hashToken(refreshToken),user.getId(), expiryDate, ip,device);
+
+//        addRefreshTokenToCookie(refreshToken,expiryDate,response);
+
+        return new TokenResult(accessToken,refreshToken,expiryDate);
     }
 
     @Transactional
@@ -88,11 +118,102 @@ public class AppService {
         return result;
     }
 
-    public String getNewAccessToken(String refreshToken) {
-        Claims claims= jwtService.parseToken(refreshToken);
-        UUID userId = jwtService.getUserId(claims);
-        User user = userService.findById(userId);
-        return jwtService.generateAccessToken(user);
+    @Transactional
+    public TokenResult getNewAccessToken(String oldRefreshToken,
+                                  HttpServletRequest request) {
+        if(oldRefreshToken==null){
+            throw new InvalidTokenException();
+        }
+        String hashedToken=hashToken(oldRefreshToken);
+        RevokeValidTokenResult result =refreshTokenService.revokeValidToken(hashedToken,Instant.now());
+        if (result== null) {
+            throw new InvalidTokenException();
+        }
+
+        User user= entityManager.getReference(User.class, result.userId());
+        String newRefreshToken=UUID.randomUUID().toString();
+        String ip = extractIp(request);
+        String device = request.getHeader("User-Agent");
+
+        refreshTokenService.save(hashToken(newRefreshToken),user.getId(),
+                result.expiryDate(),ip,device);
+
+//        addRefreshTokenToCookie(newRefreshToken,result.expiryDate(),response);
+
+        String accessToken= jwtService.generateAccessToken(user);
+        return new TokenResult(accessToken,newRefreshToken,result.expiryDate());
+
+    }
+
+    public List<ActiveSessionResponse> getActiveSession(UUID userId) {
+        List<RefreshToken> activeSessions = refreshTokenService.getActiveSessions(userId);
+
+        List<ActiveSessionResponse> responses = new ArrayList<>();
+        Set<String> ipsNeedToResolve = new HashSet<>();
+
+        // Map IP -> tokens (many sessions can share same IP)
+        Map<String, List<RefreshToken>> tokensByIp = new HashMap<>();
+
+        for (RefreshToken session : activeSessions) {
+            tokensByIp.computeIfAbsent(session.getIpAddress(), k -> new ArrayList<>())
+                    .add(session);
+
+            if (session.getCity()==null) {
+                ipsNeedToResolve.add(session.getIpAddress());
+            }
+        }
+
+        Map<String, LocationResult> locationResultMap = Map.of();
+
+        if (!ipsNeedToResolve.isEmpty()) {
+            locationResultMap = ipLocationService.resolve(new ArrayList<>(ipsNeedToResolve));
+        }
+
+        List<RefreshToken> tokensToUpdate = new ArrayList<>();
+        for (Map.Entry<String, LocationResult> entry : locationResultMap.entrySet()) {
+            String ip = entry.getKey();
+            LocationResult loc = entry.getValue();
+            if (loc == null) {
+                continue;
+            }
+
+            List<RefreshToken> tokens = tokensByIp.get(ip);
+            if (tokens == null) continue;
+
+            for (RefreshToken token : tokens) {
+                if (token.getCity()==null) {
+                    token.setCity(loc.city());
+                    token.setCountry(loc.country());
+                    tokensToUpdate.add(token);
+                }
+            }
+        }
+
+        if (!tokensToUpdate.isEmpty()) {
+            refreshTokenService.saveAll(tokensToUpdate);
+        }
+
+        for (RefreshToken session : activeSessions) {
+            String location = "Unknown";
+            if (session.getCity() != null && session.getCountry() != null) {
+                location = session.getCity() + ", " + session.getCountry();
+            }
+            responses.add(new ActiveSessionResponse(
+                    location,
+                    session.getDeviceInfo(),
+                    session.getLastUsedAt()
+            ));
+        }
+
+        return responses;
+    }
+
+    public void forceLogoutOtherSessions(UUID userId,String refreshToken){
+        if(refreshToken==null){
+            throw new InvalidTokenException();
+        }
+        refreshTokenService.forceLogoutOtherSessions(userId,hashToken(refreshToken));
+
     }
 
     public UUID getCurrentUserId() {
@@ -200,4 +321,39 @@ public class AppService {
         return projectMemberResponses;
     }
 
+
+    ////////////////////////
+    public String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return HexFormat.of()
+                    .formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private String extractIp(HttpServletRequest request) {
+        String header = request.getHeader("X-Forwarded-For");
+        if (header != null && !header.isBlank()) {
+            return header.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+    public void addRefreshTokenToCookie(String refreshToken,
+                                         Instant expiryDate,
+                                         HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) ///////////set true when not on local dev
+                .path("/")
+                .sameSite("Lax")
+                .maxAge(cookieMaxAge(expiryDate))
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+    private Duration cookieMaxAge(Instant expiryDate) {
+        Duration duration = Duration.between(Instant.now(), expiryDate);
+        return duration.isNegative() ? Duration.ZERO : duration;
+    }
 }
