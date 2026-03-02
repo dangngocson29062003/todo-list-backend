@@ -22,12 +22,16 @@ public class TaskAssignmentController {
     private AppService appService;
 
     @PostMapping
-    public TaskResponse assign(@PathVariable Long id, @RequestBody TaskAssignmentRequest request, @AuthenticationPrincipal AuthUser authUser) {
+    public TaskResponse assign(@PathVariable Long id,
+                               @RequestBody TaskAssignmentRequest request,
+                               @AuthenticationPrincipal AuthUser authUser) {
         return appService.assignTask(id, request, authUser.getId());
     }
 
-    @PutMapping()
-    public TaskAssignmentResponse unassign(@Valid @PathVariable Long id, @RequestBody UUID userId, @AuthenticationPrincipal AuthUser authUser){
-        return appService.unassignTask(id, userId, authUser.getId());
+    @DeleteMapping("/{userId}")
+    public void unassign(@Valid @PathVariable Long id,
+                                 @PathVariable UUID userId,
+                                 @AuthenticationPrincipal AuthUser authUser){
+        appService.unassignTask(id, userId, authUser.getId());
     }
 }

@@ -38,7 +38,6 @@ public class TaskAssignmentService {
     ProjectMemberRepository projectMemberRepository;
 
     public void assign(Task task, TaskAssignmentRequest request, User assigner) {
-
         List<UUID> projectMemberIds = projectMemberRepository
                 .findAllByProject_Id(task.getProject().getId())
                 .stream()
@@ -72,36 +71,13 @@ public class TaskAssignmentService {
                 .toList();
 
         taskAssignmentRepository.saveAll(newAssignments);
-
     }
 
-    public TaskAssignmentResponse update(Long id, UUID userId, UUID assignedBy){
-        Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Task not found"));
+    public void unassign(Task task, UUID userId) {
+        TaskAssignment taskAssignment = taskAssignmentRepository.findTaskAssignmentByTask_IdAndUser_Id(task.getId(), userId).orElseThrow(() -> new NotFoundException("User is not assigned to this task"));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-
-        ProjectMember assigner = projectMemberRepository
-                .findByProject_IdAndUser_Id(task.getProject().getId(), assignedBy)
-                .orElseThrow(() -> new BadRequestException("You are not a project member"));
-
-        if (assigner.getRole() != Role.MANAGER) {
-            throw new BadRequestException("You don't have permission to assign task");
-        }
-
-        boolean isMember = projectMemberRepository.existsByProject_IdAndUser_Id(task.getProject().getId(), user.getId());
-
-        if (!isMember) {
-            throw new BadRequestException("User is not a project member");
-        }
-
-        TaskAssignment taskAssignment = taskAssignmentRepository.findById(id).orElseThrow(() -> new NotFoundException("Task assignment not found"));
-
-        taskAssignment.setUser(user);
-        taskAssignment.setAssignedBy(assigner.getUser());
-
-        taskAssignmentRepository.save(taskAssignment);
-
-        return TaskAssignmentResponse.toResponse(taskAssignment);
+        taskAssignmentRepository.delete(taskAssignment);
     }
+
+
 }

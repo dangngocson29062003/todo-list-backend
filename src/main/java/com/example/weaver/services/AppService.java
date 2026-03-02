@@ -396,12 +396,13 @@ public class AppService {
     }
 
     @Transactional
-    public TaskResponse unassignTask(Long id, UUID userId, UUID requesterId) {
+    public void unassignTask(Long id, UUID userId, UUID requesterId) {
         Task task = taskService.getTask(id);
 
         projectMemberService.checkRole(task.getProject().getId(), requesterId);
 
-        return TaskResponse.toResponse(task);
+        taskAssignmentService.unassign(task, userId);
+
     }
 
 
