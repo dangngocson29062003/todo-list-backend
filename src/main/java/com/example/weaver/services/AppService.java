@@ -5,7 +5,6 @@ import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
-import com.example.weaver.dtos.others.results.RevokeValidTokenResult;
 import com.example.weaver.dtos.others.results.TokenResult;
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
@@ -13,6 +12,7 @@ import com.example.weaver.dtos.requests.UpdateTaskRequest;
 import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.dtos.responses.ProjectResponse;
+import com.example.weaver.dtos.responses.UserNotificationResponse;
 import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.*;
 import com.example.weaver.exceptions.BadRequestException;
@@ -54,6 +54,8 @@ public class AppService {
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final NotificationService notificationService;
+    private final UserNotificationService userNotificationService;
 
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
@@ -326,6 +328,46 @@ public class AppService {
         return projectMemberResponses;
     }
 
+    //NOTIFICATION
+    public Notification createNotification(String title, String message,
+                                           String actionUrl,
+                                           NotificationCategory category,
+                                           Priority priority, NotificationType type) {
+        return notificationService.create(title, message, actionUrl, category, priority.getRank(), type);
+    }
+
+    //USER_NOTIFICATION
+    @Transactional(readOnly = true)
+    public List<UserNotificationResponse> getUserNotifications(UUID userId, NotificationCategory category,
+                                                       Boolean isRead, Integer cursorPriorityRank,
+                                                       Instant cursorCreatedAt, int limit) {
+        List<UserNotification> userNotifications=
+                userNotificationService.getUserNotifications(userId,category,isRead,
+                        cursorPriorityRank,cursorCreatedAt,limit);
+
+        return userNotifications.stream().map(UserNotificationResponse::toResponse).toList();
+    }
+
+    @Transactional
+    public List<UserNotification> createUserNotifications(List<UUID> userIds,
+                                                    String title, String message,
+                                                    String actionUrl, NotificationCategory category,
+                                                    Priority priority, NotificationType type){
+        Notification notification =
+                notificationService.create(title, message, actionUrl, category, priority.getRank(), type);
+        List<User> users=new ArrayList<>();
+        for(UUID userId : userIds){
+            users.add(entityManager.getReference(User.class,userId));
+        }
+        return userNotificationService.createMultiple(users,notification);
+    }
+
+    public void markUserNotificationAsRead(UUID userId,Long userNotificationId){
+        UserNotification userNotification=userNotificationService.findByIdWithUserLoaded(userNotificationId);
+        if(!userId.equals(userNotification.getUser().getId())) {
+            throw new ForbiddenException("You don't have permission to set this notification as read");
+        }
+        userNotificationService.setRead(userNotification);
     // Tasks
     @Transactional(readOnly = true)
     public TaskResponse getTask(Long taskId, UUID requesterId) {
