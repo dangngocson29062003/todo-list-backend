@@ -53,4 +53,12 @@ public class ProjectMemberService {
     public boolean memberExists(UUID projectId, UUID userId) {
         return projectMemberRepository.existsByProject_IdAndUser_Id(projectId,userId);
     }
+    public ProjectMember checkRole(UUID projectId, UUID userId) {
+        ProjectMember member = getProjectMember(projectId, userId);
+
+        if (member.getRole() != Role.MANAGER) {
+            throw new BadRequestException("You don't have permission to delete task");
+        }
+        return member;
+    }
 }

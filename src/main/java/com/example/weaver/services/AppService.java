@@ -6,10 +6,14 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
 import com.example.weaver.dtos.others.results.TokenResult;
+import com.example.weaver.dtos.requests.CreateTaskRequest;
+import com.example.weaver.dtos.requests.TaskAssignmentRequest;
+import com.example.weaver.dtos.requests.UpdateTaskRequest;
 import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.dtos.responses.ProjectResponse;
 import com.example.weaver.dtos.responses.UserNotificationResponse;
+import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.*;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
@@ -45,6 +49,8 @@ public class AppService {
     private final UserService userService;
     private final ProjectService projectService;
     private final ProjectMemberService projectMemberService;
+    private final TaskService taskService;
+    private final TaskAssignmentService taskAssignmentService;
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -55,6 +61,7 @@ public class AppService {
     private final ApplicationEventPublisher eventPublisher;
     private final EntityManager entityManager;
     private final IpLocationService ipLocationService;
+
 
     //USER
     @Transactional
@@ -361,6 +368,83 @@ public class AppService {
             throw new ForbiddenException("You don't have permission to set this notification as read");
         }
         userNotificationService.setRead(userNotification);
+    // Tasks
+    @Transactional(readOnly = true)
+    public TaskResponse getTask(Long taskId, UUID requesterId) {
+
+        Task task = taskService.getTask(taskId);
+        projectMemberService.getProjectMember(task.getProject().getId(), requesterId);
+
+        return TaskResponse.toResponse(task);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TaskResponse> getTasks(UUID projectId,
+                                       UUID requesterId,
+                                       TaskStatus status,
+                                       Priority priority,
+                                       TaskType type){
+
+        projectMemberService.getProjectMember(projectId, requesterId);
+
+        return taskService.getTasks(projectId, status, priority, type)
+                .stream()
+                .map(TaskResponse::toResponse)
+                .toList();
+
+    }
+
+
+    @Transactional
+    public TaskResponse createTask(UUID projectId,
+                               UUID requesterId,
+                               CreateTaskRequest createTaskRequest) {
+
+        projectMemberService.checkRole(projectId, requesterId);
+
+        return TaskResponse.toResponse(taskService.create(projectId, createTaskRequest));
+    }
+
+    @Transactional
+    public TaskResponse updateTask(Long id, UUID requesterId, UpdateTaskRequest updateTaskRequest) {
+
+        Task task = taskService.getTask(id);
+
+        projectMemberService.checkRole(task.getProject().getId(), requesterId);
+
+        return  TaskResponse.toResponse(taskService.update(id, updateTaskRequest));
+    }
+
+    @Transactional
+    public void deleteTask(Long id, UUID requesterId) {
+
+        Task task = taskService.getTask(id);
+
+        projectMemberService.checkRole(task.getProject().getId(), requesterId);
+
+        taskService.delete(task);
+    }
+
+    // Task Assignment
+    @Transactional
+    public TaskResponse assignTask(Long id, TaskAssignmentRequest request, UUID requesterId) {
+        Task task = taskService.getTask(id);
+
+        ProjectMember assigner = projectMemberService.checkRole(task.getProject().getId(), requesterId);
+
+        taskAssignmentService.assign(task, request, assigner.getUser());
+
+        return TaskResponse.toResponse(task);
+    }
+
+    @Transactional
+    public void unassignTask(Long id, UUID userId, UUID requesterId) {
+        Task task = taskService.getTask(id);
+
+        projectMemberService.checkRole(task.getProject().getId(), requesterId);
+
+        taskAssignmentService.unassign(task, userId);
+
     }
 
 
