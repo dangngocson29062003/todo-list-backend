@@ -24,6 +24,7 @@ public class SecurityConfigs {
     private final String[] ALLOWED_PATHS = new String[]{
             "/swagger-ui/**",
             "/v3/api-docs/**",
+            "/ws/**",
             "/swagger-ui.html",
             "/users/login", "/users/register","/users/refresh"};
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
