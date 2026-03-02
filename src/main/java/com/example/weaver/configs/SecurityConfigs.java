@@ -26,7 +26,8 @@ public class SecurityConfigs {
             "/v3/api-docs/**",
             "/ws/**",
             "/swagger-ui.html",
-            "/users/login", "/users/register","/users/refresh"};
+            "/users/login", "/users/register", "/users/refresh",
+            "/user-notifications/test"};
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
@@ -46,6 +47,7 @@ public class SecurityConfigs {
                 .securityContext(context -> context.requireExplicitSave(false))
                 .build();
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);

@@ -349,7 +349,7 @@ public class AppService {
     }
 
     @Transactional
-    public List<UserNotification> createUserNotifications(List<UUID> userIds,
+    public List<UserNotificationResponse> createUserNotifications(List<UUID> userIds,
                                                     String title, String message,
                                                     String actionUrl, NotificationCategory category,
                                                     Priority priority, NotificationType type){
@@ -359,7 +359,8 @@ public class AppService {
         for(UUID userId : userIds){
             users.add(entityManager.getReference(User.class,userId));
         }
-        return userNotificationService.createMultiple(users,notification);
+        return userNotificationService.createMultiple(users,notification)
+                .stream().map(UserNotificationResponse::toResponse).toList();
     }
 
     public void markUserNotificationAsRead(UUID userId,Long userNotificationId) {
