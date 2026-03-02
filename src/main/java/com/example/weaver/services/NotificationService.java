@@ -16,8 +16,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     public Notification create(String title, String message,
-                               String actionUrl,
-                               NotificationCategory category,
+                               String actionUrl, NotificationCategory category,
                                int priorityRank, NotificationType type){
         Notification notification = Notification.builder()
                 .title(title)

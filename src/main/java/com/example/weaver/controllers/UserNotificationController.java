@@ -1,10 +1,10 @@
 package com.example.weaver.controllers;
 
 import com.example.weaver.dtos.others.AuthUser;
+import com.example.weaver.dtos.requests.Test;
 import com.example.weaver.dtos.responses.UserNotificationResponse;
 import com.example.weaver.enums.NotificationCategory;
-import com.example.weaver.models.Notification;
-import com.example.weaver.models.UserNotification;
+import com.example.weaver.enums.Priority;
 import com.example.weaver.services.AppService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,7 +23,7 @@ public class UserNotificationController {
     public List<UserNotificationResponse> getNotifications(
             @RequestParam(required = false) NotificationCategory category,
             @RequestParam(required = false) Boolean isRead,
-            @RequestParam(required = false) Integer cursorPriorityRank,
+            @RequestParam(required = false) Priority cursorPriority,
             @RequestParam(required = false) Instant cursorCreatedAt,
             @RequestParam(defaultValue = "20") int limit,
             @AuthenticationPrincipal AuthUser user
@@ -32,7 +32,7 @@ public class UserNotificationController {
                 user.getId(),
                 category,
                 isRead,
-                cursorPriorityRank,
+                cursorPriority.getRank(),
                 cursorCreatedAt,
                 limit
         );

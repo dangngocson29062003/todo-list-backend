@@ -17,25 +17,23 @@ public interface UserNotificationRepository extends JpaRepository<UserNotificati
     Optional<UserNotification> findById(Long id);
 
     @Query("""
-        SELECT unoti
-        FROM UserNotification unoti
-        JOIN FETCH unoti.notification noti
-        WHERE unoti.user.id = :userId
-        AND (:category IS NULL OR noti.category = :category)
-        AND (:isRead IS NULL OR unoti.isRead = :isRead)
-        AND (:cursorCreatedAt IS NULL OR
-                (
+                SELECT unoti
+                FROM UserNotification unoti
+                JOIN FETCH unoti.notification noti
+                WHERE unoti.user.id = :userId
+                AND (:category IS NULL OR noti.category = :category)
+                AND (:isRead IS NULL OR unoti.isRead = :isRead)
+                AND (
                     noti.priorityRank < :cursorPriorityRank
                     OR (
                         noti.priorityRank = :cursorPriorityRank
                         AND noti.createdAt < :cursorCreatedAt
                     )
                 )
-        )
-        ORDER BY
-            noti.priorityRank DESC,
-            noti.createdAt DESC
-        """)
+                ORDER BY
+                    noti.priorityRank DESC,
+                    noti.createdAt DESC
+            """)
     List<UserNotification> getNotificationsCursor(
             UUID userId,
             NotificationCategory category,
