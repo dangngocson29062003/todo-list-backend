@@ -1,5 +1,6 @@
 package com.example.weaver.services;
 
+import com.example.weaver.dtos.events.NotificationCreatedEvent;
 import com.example.weaver.dtos.events.UserRegisteredEvent;
 import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
 import com.example.weaver.dtos.others.AuthUser;
@@ -21,6 +22,7 @@ import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.*;
 import com.example.weaver.services.Others.IpLocationService;
 import com.example.weaver.services.Others.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -57,10 +59,12 @@ public class AppService {
     private final NotificationService notificationService;
     private final UserNotificationService userNotificationService;
 
+    private final OutboxEventService outboxEventService;
     private final PasswordEncoder passwordEncoder;
     private final ApplicationEventPublisher eventPublisher;
     private final EntityManager entityManager;
     private final IpLocationService ipLocationService;
+    private final ObjectMapper objectMapper;
 
 
     //USER
@@ -349,18 +353,16 @@ public class AppService {
     }
 
     @Transactional
-    public List<UserNotificationResponse> createUserNotifications(List<UUID> userIds,
-                                                    String title, String message,
-                                                    String actionUrl, NotificationCategory category,
-                                                    Priority priority, NotificationType type){
-        Notification notification =
-                notificationService.create(title, message, actionUrl, category, priority.getRank(), type);
+    public void createUserNotifications(List<UUID> userIds,
+                                        Long notificationId){
+        if(notificationService.existsById(notificationId))
+            throw new BadRequestException("Notification already exists");
+        Notification notification = entityManager.getReference(Notification.class,notificationId);
         List<User> users=new ArrayList<>();
         for(UUID userId : userIds){
             users.add(entityManager.getReference(User.class,userId));
         }
-        return userNotificationService.createMultiple(users,notification)
-                .stream().map(UserNotificationResponse::toResponse).toList();
+        userNotificationService.createMultiple(users, notification);
     }
 
     public void markUserNotificationAsRead(UUID userId,Long userNotificationId) {
@@ -449,6 +451,10 @@ public class AppService {
 
     }
 
+    public void test(List<UUID> userIds,Long notificationId){
+        NotificationCreatedEvent event=new NotificationCreatedEvent(notificationId,userIds);
+        outboxEventService.create(OutboxEventTopic.NotificationCreated,event);
+    }
 
     ////////////////////////
     public String hashToken(String token) {

@@ -47,6 +47,22 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  kafka:
+    bootstrap-servers: localhost:9092
+
+    producer:
+      retries: 3
+      properties:
+        enable.idempotence: true
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+    consumer:
+      group-id: weaver-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
 app:
   web-url: ${WEB_URL}
   server-url: ${SERVER_URL}
@@ -66,3 +82,5 @@ logging:
   level:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
+    org.apache.kafka: WARN
+    org.springframework.kafka: WARN

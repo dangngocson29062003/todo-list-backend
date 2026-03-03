@@ -11,13 +11,24 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/user-notifications")
 @RequiredArgsConstructor
 public class UserNotificationController {
     private final AppService appService;
+
+    @PostMapping("/test")
+    public void test(){
+        List<UUID> userIds=new ArrayList<>();
+        userIds.add(UUID.randomUUID());
+        userIds.add(UUID.randomUUID());
+        Long notificationId=3L;
+        appService.test(userIds,notificationId);
+    }
 
     @GetMapping("")
     public List<UserNotificationResponse> getNotifications(

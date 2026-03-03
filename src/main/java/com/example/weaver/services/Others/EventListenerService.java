@@ -14,7 +14,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @RequiredArgsConstructor
 public class EventListenerService {
     private final EmailVerificationTokenService emailService;
-
+    
 
     //Use Outbox pattern in the future
     @Async
