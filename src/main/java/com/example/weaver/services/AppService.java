@@ -362,12 +362,13 @@ public class AppService {
         return userNotificationService.createMultiple(users,notification);
     }
 
-    public void markUserNotificationAsRead(UUID userId,Long userNotificationId){
-        UserNotification userNotification=userNotificationService.findByIdWithUserLoaded(userNotificationId);
-        if(!userId.equals(userNotification.getUser().getId())) {
+    public void markUserNotificationAsRead(UUID userId,Long userNotificationId) {
+        UserNotification userNotification = userNotificationService.findByIdWithUserLoaded(userNotificationId);
+        if (!userId.equals(userNotification.getUser().getId())) {
             throw new ForbiddenException("You don't have permission to set this notification as read");
         }
         userNotificationService.setRead(userNotification);
+    }
     // Tasks
     @Transactional(readOnly = true)
     public TaskResponse getTask(Long taskId, UUID requesterId) {

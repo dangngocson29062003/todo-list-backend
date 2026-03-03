@@ -8,6 +8,7 @@ import com.example.weaver.repositories.ProjectMemberRepository;
 import com.example.weaver.repositories.ProjectRepository;
 import com.example.weaver.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 
 @Controller
 @RequiredArgsConstructor
+@Slf4j
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
@@ -29,13 +31,11 @@ public class ChatController {
 
     @MessageMapping("/chat.send")
     public void sendMessage(ChatMessage request, Principal principal) {
-
-        // Lấy email từ JWT
         String email = principal.getName();
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
-
+        
         Project project = projectRepository.findById(request.getProjectId()).orElseThrow(() -> new NotFoundException("Project not found"));
 
         boolean isMember = projectMemberRepository
@@ -47,6 +47,8 @@ public class ChatController {
         if (!isMember) {
             throw new RuntimeException("You are not a member of this project");
         }
+
+
 
         messagingTemplate.convertAndSend(
                 "/topic/project/" + request.getProjectId(),

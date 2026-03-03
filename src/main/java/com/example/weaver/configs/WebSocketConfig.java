@@ -37,35 +37,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         config.setApplicationDestinationPrefixes("/app");
         config.enableSimpleBroker("/topic", "/queue");
     }
-    @Override
-    public void configureClientInboundChannel(ChannelRegistration registration) {
-        registration.interceptors(new ChannelInterceptor() {
-            @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
-                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    // Access authentication header(s) and invoke accessor.setUser(user)
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
-                        String token = authHeader.substring(7);
-                        Claims claims = jwtService.parseToken(token);
-
-                        UUID userId = jwtService.getUserId(claims);
-                        String email = jwtService.getEmail(claims);
-
-                        AuthUser authUser = new AuthUser();
-                        authUser.setId(userId);
-                        authUser.setEmail(email);
-
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(authUser, null, null);
-
-                        accessor.setUser(authentication);
-                    }
-                }
-                return message;
-            }
-        });
-    }
 }
