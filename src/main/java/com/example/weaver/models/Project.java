@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -34,6 +35,10 @@ public class Project {
 
     @OneToMany(mappedBy = "project")
     private Set<Task> tasks;
+
+    @OneToMany(mappedBy = "project")
+    @JsonIgnore
+    private Set<Message> messages;
 
     @CreationTimestamp
     private Instant createdAt;

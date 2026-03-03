@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -65,4 +66,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<TaskAssignment> taskAssignments = new HashSet<>();
+
+    @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<Message> messages;
 }
