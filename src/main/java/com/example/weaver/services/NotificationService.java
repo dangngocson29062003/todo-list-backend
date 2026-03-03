@@ -28,4 +28,8 @@ public class NotificationService {
                 .build();
         return notificationRepository.save(notification);
     }
+
+    public boolean existsById(Long notificationId) {
+        return  notificationRepository.existsById(notificationId);
+    }
 }
