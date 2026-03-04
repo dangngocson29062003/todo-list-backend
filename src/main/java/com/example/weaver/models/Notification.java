@@ -1,6 +1,7 @@
 package com.example.weaver.models;
 
 import com.example.weaver.enums.NotificationCategory;
+import com.example.weaver.enums.NotificationCode;
 import com.example.weaver.enums.NotificationType;
 import com.example.weaver.enums.Priority;
 import jakarta.persistence.*;
@@ -28,13 +29,12 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String title;
-    private String message;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationCode code;
 
-    @Column(name = "action_url")
-    private String actionUrl;
-
-//    private String icon;
+    @Column(name = "pay_load", columnDefinition = "TEXT", nullable = false)
+    private String payload;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -42,11 +42,12 @@ public class ProjectService {
         project.setDescription(description);
         project.setFinishedAt(finishedAt);
 
-//        return projectRepository.save(project);
+//        return projectRepository.save(projectResponse);
         return project;
     }
     public void delete(Project project) {
-        projectRepository.delete(project);
+        //use soft delete in the future
+//        projectRepository.delete(projectResponse);
     }
 
     public Project findById(UUID id) {

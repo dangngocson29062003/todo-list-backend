@@ -14,7 +14,14 @@ import java.time.Instant;
         name = "user_notifications",
         indexes = {
                 @Index(name = "idx_user_notification_feed", columnList = "user_id, is_read, notification_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_user_notification_user_notification",
+                        columnNames = {"user_id", "notification_id"}
+                )
         }
+
 )
 @AllArgsConstructor
 @NoArgsConstructor

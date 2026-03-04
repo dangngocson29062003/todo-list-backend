@@ -45,7 +45,6 @@ public class OutboxEventService {
             processSingleEvent(event);
         }
     }
-    @Transactional
     public void processSingleEvent(OutboxEvent event) {
         try {
             kafkaEventProducer.sendSync(
@@ -73,5 +72,6 @@ public class OutboxEventService {
     public void cleanupSentEvents() {
         repository.deleteSentEventsBatch();
     }
+
 
 }

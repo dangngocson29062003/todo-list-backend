@@ -41,7 +41,7 @@ public class MessageService {
                 );
 
         if (!isMember) {
-            throw new RuntimeException("You are not a member of this project");
+            throw new RuntimeException("You are not a member of this projectResponse");
         }
 
         Message message = Message.builder()
@@ -69,7 +69,7 @@ public class MessageService {
                         user.getId()
                 );
         if (!isMember) {
-            throw new RuntimeException("You are not a member of this project");
+            throw new RuntimeException("You are not a member of this projectResponse");
         }
         List<MessageResponse> response = messageRepository.findMessagesByProject_Id(projectId).stream().map(MessageResponse::toResponse).toList();
         return response;

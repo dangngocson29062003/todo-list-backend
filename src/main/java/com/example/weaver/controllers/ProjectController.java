@@ -32,7 +32,9 @@ public class ProjectController {
     public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request,
                                  @AuthenticationPrincipal AuthUser authUser) {
         return appService.createProject(authUser.getId(),
-                request.getName().trim(), request.getDescription().trim(), request.getFinishedAt());
+                request.getName().trim(),
+                request.getDescription()!=null? request.getDescription().trim():null,
+                request.getFinishedAt()!=null? request.getFinishedAt():null);
     }
 
     @PutMapping("/{id}")

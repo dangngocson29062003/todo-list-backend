@@ -37,12 +37,14 @@ public class ScheduleService {
     }
 
     @Scheduled(fixedDelay = 1000)
+    @Transactional
     public void processPendingEvents(){
         outboxEventService.processPendingEvents();
     }
 
     @Scheduled(fixedDelay = 300000)
-    private void cleanupSentEvents(){
+    @Transactional
+    public void cleanupSentEvents(){
         outboxEventService.cleanupSentEvents();
     }
 }

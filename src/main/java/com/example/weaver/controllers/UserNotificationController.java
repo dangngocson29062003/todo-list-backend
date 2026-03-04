@@ -21,14 +21,6 @@ import java.util.UUID;
 public class UserNotificationController {
     private final AppService appService;
 
-    @PostMapping("/test")
-    public void test(){
-        List<UUID> userIds=new ArrayList<>();
-        userIds.add(UUID.randomUUID());
-        userIds.add(UUID.randomUUID());
-        Long notificationId=3L;
-        appService.test(userIds,notificationId);
-    }
 
     @GetMapping("")
     public List<UserNotificationResponse> getNotifications(
