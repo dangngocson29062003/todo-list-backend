@@ -11,5 +11,5 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TaskAssignmentRequest {
-    private List<UUID> userId;
+    private List<UUID> userIds;
 }

@@ -27,7 +27,8 @@ public class JwtService {
 
     public String generateAccessToken(User user) {
         //15m
-        long accessTokenExpiration = 15 * 60 * 1000;
+//        long accessTokenExpiration = 15 * 60 * 1000;
+        long accessTokenExpiration = 7 * 24 * 60 * 60 * 1000; //dev only
         return generateToken(user, accessTokenExpiration);
     }
     public String generateRefreshToken(User user) {

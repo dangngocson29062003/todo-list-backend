@@ -44,12 +44,12 @@ public class TaskAssignmentService {
                 .map(member -> member.getUser().getId())
                 .toList();
 
-        List<UUID> invalidIds = request.getUserId().stream()
+        List<UUID> invalidIds = request.getUserIds().stream()
                 .filter(userId -> !projectMemberIds.contains(userId))
                 .toList();
 
         if (!invalidIds.isEmpty()) {
-            throw new BadRequestException("Some users are not project members: " + invalidIds);
+            throw new BadRequestException("Some users are not projectResponse members: " + invalidIds);
         }
 
         List<UUID> alreadyAssignedIds = taskAssignmentRepository.findAllByTask_Id(task.getId())
@@ -57,7 +57,7 @@ public class TaskAssignmentService {
                 .map(ta -> ta.getUser().getId())
                 .toList();
 
-        List<TaskAssignment> newAssignments = request.getUserId().stream()
+        List<TaskAssignment> newAssignments = request.getUserIds().stream()
                 .filter(userId -> !alreadyAssignedIds.contains(userId))
                 .map(userId -> {
                     User user = userRepository.findById(userId)

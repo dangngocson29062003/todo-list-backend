@@ -45,9 +45,11 @@ public class UserNotificationService {
     public List<UserNotification> getUserNotifications(UUID userId, NotificationCategory category,
                                                        Boolean isRead, Integer cursorPriorityRank,
                                                        Instant cursorCreatedAt, int limit) {
-
         Pageable pageable = PageRequest.of(0, limit);
-
+        if (cursorPriorityRank == null || cursorCreatedAt == null) {
+            cursorPriorityRank = Integer.MAX_VALUE;
+            cursorCreatedAt = Instant.parse("9999-12-31T23:59:59Z");
+        }
         return repository.getNotificationsCursor(
                 userId,
                 category,

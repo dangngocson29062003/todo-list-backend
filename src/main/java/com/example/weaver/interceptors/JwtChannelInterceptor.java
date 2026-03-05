@@ -26,8 +26,6 @@ import java.util.UUID;
 public class JwtChannelInterceptor implements ChannelInterceptor {
     private final JwtService jwtService;
 
-
-
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);

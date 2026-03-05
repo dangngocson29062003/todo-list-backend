@@ -1,6 +1,7 @@
 package com.example.weaver.services.Others;
 
 import com.example.weaver.services.EmailVerificationTokenService;
+import com.example.weaver.services.OutboxEventService;
 import com.example.weaver.services.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -8,12 +9,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
     private final EmailVerificationTokenService emailService;
     private final RefreshTokenService refreshTokenService;
+    private final OutboxEventService outboxEventService;
 
     @Transactional
     @Scheduled(cron = "0 0 * * * *") // mỗi giờ
@@ -25,5 +29,17 @@ public class ScheduleService {
     @Transactional
     public void cleanupExpiredTokens() {
         refreshTokenService.deleteByExpiryDateBefore(Instant.now());
+    }
+
+    @Scheduled(fixedDelay = 1000)
+    @Transactional
+    public void processPendingEvents(){
+        outboxEventService.processPendingEvents();
+    }
+
+    @Scheduled(fixedDelay = 300000)
+    @Transactional
+    public void cleanupSentEvents(){
+        outboxEventService.cleanupSentEvents();
     }
 }

@@ -53,7 +53,7 @@ public class TaskService {
                     .orElseThrow(() -> new NotFoundException("Parent task not found"));
 
             if (!parent.getProject().getId().equals(projectId)) {
-                throw new BadRequestException("Parent task must belong to same project");
+                throw new BadRequestException("Parent task must belong to same projectResponse");
             }
         }
 

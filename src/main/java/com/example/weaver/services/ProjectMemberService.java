@@ -50,6 +50,10 @@ public class ProjectMemberService {
         return projectMemberRepository.findByProject_IdAndUser_Id(projectId,userId)
                 .orElseThrow(()->new BadRequestException("User does not belong to this project"));
     }
+    public ProjectMember getProjectMemberWithProjectLoaded(UUID projectId, UUID userId) {
+        return projectMemberRepository.findWithProjectByProject_IdAndUser_Id(projectId,userId)
+                .orElseThrow(()->new BadRequestException("User does not belong to this project"));
+    }
     public boolean memberExists(UUID projectId, UUID userId) {
         return projectMemberRepository.existsByProject_IdAndUser_Id(projectId,userId);
     }
