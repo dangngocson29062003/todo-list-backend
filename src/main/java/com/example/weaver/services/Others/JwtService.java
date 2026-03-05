@@ -31,11 +31,6 @@ public class JwtService {
         long accessTokenExpiration = 7 * 24 * 60 * 60 * 1000; //dev only
         return generateToken(user, accessTokenExpiration);
     }
-    public String generateRefreshToken(User user) {
-        //7day
-        long refreshTokenExpiration = 7 * 24 * 60 * 60 * 1000;
-        return generateToken(user, refreshTokenExpiration);
-    }
 
     public String generateToken( User user, long expiresIn ) {
         return Jwts.builder()

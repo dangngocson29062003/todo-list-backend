@@ -92,8 +92,8 @@ public class AppService {
 
         Instant now = Instant.now();
         Instant expiryDate = Boolean.TRUE.equals(rememberMe)
-                ? now.plus(7, ChronoUnit.DAYS)
-                : now.plus(6, ChronoUnit.HOURS);
+                ? now.plus(30, ChronoUnit.DAYS)
+                : now.plus(7, ChronoUnit.DAYS);
         refreshTokenService.save(hashToken(refreshToken), user.getId(), expiryDate, ip, device);
 
 //        addRefreshTokenToCookie(refreshToken,expiryDate,response);
@@ -127,6 +127,7 @@ public class AppService {
     @Transactional
     public TokenResult getNewAccessToken(String oldRefreshToken,
                                          HttpServletRequest request) {
+        System.out.println(oldRefreshToken);
         if (oldRefreshToken == null) {
             throw new InvalidTokenException();
         }
@@ -524,7 +525,7 @@ public class AppService {
         }
     }
 
-    private String extractIp(HttpServletRequest request) {
+    public String extractIp(HttpServletRequest request) {
         String header = request.getHeader("X-Forwarded-For");
         if (header != null && !header.isBlank()) {
             return header.split(",")[0].trim();
