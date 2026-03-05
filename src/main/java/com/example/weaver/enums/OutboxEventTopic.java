@@ -3,6 +3,7 @@ package com.example.weaver.enums;
 public enum OutboxEventTopic {
     MemberAdded,
     MemberRemoved,
-    MemberRoleUpdated, TaskAssigned,
-
+    MemberRoleUpdated,
+    TaskAssigned,
+    NotificationCreated,
 }

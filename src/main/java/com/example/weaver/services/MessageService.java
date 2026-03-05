@@ -41,7 +41,7 @@ public class MessageService {
                 );
 
         if (!isMember) {
-            throw new RuntimeException("You are not a member of this projectResponse");
+            throw new RuntimeException("You are not a member of this project");
         }
 
         Message message = Message.builder()

@@ -8,7 +8,7 @@ import com.example.weaver.models.UserNotification;
 
 import java.time.Instant;
 
-public record UserNotificationResponse(Long id, NotificationCode code,String payload, NotificationCategory category,
+public record UserNotificationResponse(Long id, NotificationCode code,Object payload, NotificationCategory category,
                                        int priorityRank, NotificationType type, Instant createdAt,
                                        boolean isRead) {
     public static UserNotificationResponse toResponse(UserNotification u){

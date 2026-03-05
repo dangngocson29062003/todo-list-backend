@@ -1,13 +1,8 @@
 package com.example.weaver.services.Others;
 
-import com.example.weaver.dtos.events.NotificationCreatedEvent;
-import com.example.weaver.enums.OutboxEventTopic;
-import com.example.weaver.models.OutboxEvent;
 import com.example.weaver.services.EmailVerificationTokenService;
 import com.example.weaver.services.OutboxEventService;
 import com.example.weaver.services.RefreshTokenService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

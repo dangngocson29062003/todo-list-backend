@@ -1,9 +1,6 @@
 package com.example.weaver.services;
 
-import com.example.weaver.dtos.events.TaskAssignedEvent;
-import com.example.weaver.dtos.events.MemberAddedEvent;
-import com.example.weaver.dtos.events.UserRegisteredEvent;
-import com.example.weaver.dtos.events.EmailVerificationExpiredEvent;
+import com.example.weaver.dtos.events.*;
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
@@ -370,7 +367,13 @@ public class AppService {
         for (UUID userId : userIds) {
             users.add(entityManager.getReference(User.class, userId));
         }
-        userNotificationService.createMultiple(users, notification);
+        List<UserNotification> userNotifications= userNotificationService.createMultiple(users, notification);
+
+        NotificationCreatedEvent event =
+                new NotificationCreatedEvent(userIds,
+                        userNotifications.stream().map(UserNotification::getId).toList(),
+                        code,payloadObject, category,priority.getRank(),type,notification.getCreatedAt());
+        outboxEventService.create(OutboxEventTopic.NotificationCreated, event);
     }
 
     public void markUserNotificationAsRead(UUID userId, Long userNotificationId) {
