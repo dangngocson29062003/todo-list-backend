@@ -124,6 +124,10 @@ public class AppService {
         return result;
     }
 
+    public void logout(String refreshToken,UUID userId) {
+        refreshTokenService.delete(hashToken(refreshToken), userId);
+    }
+
     @Transactional
     public TokenResult getNewAccessToken(String oldRefreshToken,
                                          HttpServletRequest request) {

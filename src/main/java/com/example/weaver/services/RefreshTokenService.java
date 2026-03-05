@@ -33,6 +33,9 @@ public class RefreshTokenService {
                 .build();
         refreshTokenRepository.save(refreshToken);
     }
+    public void delete(String hashedToken, UUID userId) {
+        refreshTokenRepository.deleteByHashedTokenAndUserId(hashedToken,userId);
+    }
 
     private void checkIfExceedTokenLimit(UUID userId) {
         List<RefreshToken> refreshTokens=refreshTokenRepository.findActiveTokensForUpdate(userId);
