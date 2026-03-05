@@ -5,14 +5,11 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
 import com.example.weaver.dtos.others.results.TokenResult;
+import com.example.weaver.dtos.requests.CommentRequest;
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
 import com.example.weaver.dtos.requests.UpdateTaskRequest;
-import com.example.weaver.dtos.responses.ActiveSessionResponse;
-import com.example.weaver.dtos.responses.ProjectMemberResponse;
-import com.example.weaver.dtos.responses.ProjectResponse;
-import com.example.weaver.dtos.responses.UserNotificationResponse;
-import com.example.weaver.dtos.responses.TaskResponse;
+import com.example.weaver.dtos.responses.*;
 import com.example.weaver.enums.*;
 import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.ForbiddenException;
@@ -52,6 +49,7 @@ public class AppService {
     private final ProjectMemberService projectMemberService;
     private final TaskService taskService;
     private final TaskAssignmentService taskAssignmentService;
+    private final CommentService commentService;
     private final EmailVerificationTokenService emailService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -294,7 +292,7 @@ public class AppService {
         User user = userService.findById(newMemberId);
         ProjectMember newProjectMember = projectMemberService.addProjectMember(requester.getProject(), user, Role.VIEWER);
 
-        ProjectResponse projectResponse=ProjectResponse.toResponse(requester.getProject());
+        ProjectResponse projectResponse = ProjectResponse.toResponse(requester.getProject());
         MemberAddedEvent event = new MemberAddedEvent(
                 newMemberId,
                 NotificationCode.MEMBER_ADDED,
@@ -367,12 +365,12 @@ public class AppService {
         for (UUID userId : userIds) {
             users.add(entityManager.getReference(User.class, userId));
         }
-        List<UserNotification> userNotifications= userNotificationService.createMultiple(users, notification);
+        List<UserNotification> userNotifications = userNotificationService.createMultiple(users, notification);
 
         NotificationCreatedEvent event =
                 new NotificationCreatedEvent(userIds,
                         userNotifications.stream().map(UserNotification::getId).toList(),
-                        code,payloadObject, category,priority.getRank(),type,notification.getCreatedAt());
+                        code, payloadObject, category, priority.getRank(), type, notification.getCreatedAt());
         outboxEventService.create(OutboxEventTopic.NotificationCreated, event);
     }
 
@@ -452,14 +450,14 @@ public class AppService {
 
         TaskResponse taskResponse = TaskResponse.toResponse(task);
 
-        TaskAssignedEvent taskAssignedEvent =new TaskAssignedEvent(
+        TaskAssignedEvent taskAssignedEvent = new TaskAssignedEvent(
                 request.getUserIds(),
                 taskResponse,
                 NotificationCode.TASK_ASSIGNED,
                 NotificationCategory.TASK,
                 Priority.HIGH,
                 NotificationType.ANNOUNCEMENT
-                );
+        );
         outboxEventService.create(OutboxEventTopic.TaskAssigned, taskAssignedEvent);
 
         return taskResponse;
@@ -475,6 +473,46 @@ public class AppService {
 
     }
 
+    //Comment
+    @Transactional
+    public CommentResponse createComment(Long taskId, UUID userId, CommentRequest request) {
+        Task task = taskService.getTask(taskId);
+        User user = userService.findById(userId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        return CommentResponse.toResponse(commentService.create(task, user, request));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getComments(Long taskId, UUID userId) {
+        Task task = taskService.getTask(taskId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        return commentService.getComments(taskId)
+                .stream()
+                .map(CommentResponse::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public CommentResponse updateComment(Long taskId, Long id, UUID userId, String content) {
+        Task task = taskService.getTask(taskId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        Comment comment = commentService.checkAuthor(id, userId);
+        return CommentResponse.toResponse(commentService.update(comment, content));
+
+    }
+
+    @Transactional
+    public void deleteComment(Long taskId, UUID userId, Long id) {
+        Task task = taskService.getTask(taskId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        Comment comment = commentService.checkAuthor(id, userId);
+
+        commentService.delete(comment);
+    }
     /// /////////////////////
     public String hashToken(String token) {
         try {

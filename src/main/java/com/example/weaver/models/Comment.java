@@ -5,11 +5,16 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Getter
 @Setter
 @Entity(name = "comments")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Comment {
 
     @Id
@@ -35,5 +40,5 @@ public class Comment {
     private Comment parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
-    private Set<Comment> replies;
+    private List<Comment> replies = new ArrayList<>();
 }

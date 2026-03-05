@@ -6,6 +6,7 @@ import com.example.weaver.dtos.others.results.TokenResult;
 import com.example.weaver.dtos.requests.LoginRequest;
 import com.example.weaver.dtos.requests.RegisterRequest;
 import com.example.weaver.dtos.responses.ActiveSessionResponse;
+import com.example.weaver.dtos.responses.LoginResponse;
 import com.example.weaver.services.AppService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,9 +34,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@Valid @RequestBody LoginRequest loginRequest,
-                        HttpServletRequest request,
-                        HttpServletResponse response) throws IOException {
+    public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest,
+                               HttpServletRequest request,
+                               HttpServletResponse response) throws IOException {
         TokenResult tokenResult = appService.login(
                 loginRequest.getEmail(),
                 loginRequest.getPassword(),
@@ -45,7 +46,7 @@ public class UserController {
         appService.addRefreshTokenToCookie(tokenResult.refreshToken(),
                 tokenResult.expiryDate(), response);
 
-        return tokenResult.accessToken();
+        return new LoginResponse(tokenResult.accessToken(), tokenResult.refreshToken());
     }
 
     @GetMapping("/verify")

@@ -2,6 +2,7 @@ package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.MessageRequest;
 import com.example.weaver.dtos.responses.MessageResponse;
+import com.example.weaver.exceptions.BadRequestException;
 import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Message;
 import com.example.weaver.models.Project;
@@ -41,7 +42,7 @@ public class MessageService {
                 );
 
         if (!isMember) {
-            throw new RuntimeException("You are not a member of this project");
+            throw new BadRequestException("You're not a member of this project");
         }
 
         Message message = Message.builder()
@@ -69,7 +70,7 @@ public class MessageService {
                         user.getId()
                 );
         if (!isMember) {
-            throw new RuntimeException("You are not a member of this projectResponse");
+            throw new BadRequestException("You are not a member of this project");
         }
         List<MessageResponse> response = messageRepository.findMessagesByProject_Id(projectId).stream().map(MessageResponse::toResponse).toList();
         return response;
