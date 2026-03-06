@@ -538,6 +538,15 @@ public class AppService {
     }
 
     //Files
+    @Transactional(readOnly = true)
+    public List<FileResponse> getFiles(Long taskId, UUID userId) {
+        Task task = taskService.getTask(taskId);
+        User user = userService.findById(userId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        return fileService.getFiles(taskId).stream().map(FileResponse::toResponse).toList();
+    }
+
     @Transactional
     public FileResponse uploadFiles(Long taskId, UUID userId, MultipartFile file) {
         Task task = taskService.getTask(taskId);
@@ -557,6 +566,7 @@ public class AppService {
 
         fileService.delete(id, taskId);
     }
+
     /// /////////////////////
     public static String hashToken(String token) {
         try {

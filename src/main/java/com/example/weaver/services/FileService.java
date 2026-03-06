@@ -27,6 +27,10 @@ public class FileService {
 
     private final AttachmentRepository attachmentRepository;
 
+    public List<Attachment> getFiles(Long taskId) {
+        return attachmentRepository.findAttachmentsByTask_Id(taskId);
+    }
+
     public Attachment upload(Task task, User user, MultipartFile file) {
         try {
             String mimeType = file.getContentType();
