@@ -61,7 +61,7 @@ public class GlobalExceptionHandler {
                 ApiResponse.error(
                         500,
                         "INTERNAL_SERVER_ERROR",
-                        "Something went wrong"
+                        ex.getMessage()
                 )
         );
     }

@@ -3,7 +3,9 @@ spring:
     name: weaver
   config:
     import: optional:file:.env[.properties]
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -29,6 +31,10 @@ spring:
             scope:
               - email
               - profile
+  cloudinary:
+    name: ${CLOUDINARY_NAME}
+    api-key: ${CLOUDINARY_API}
+    secret-key: ${CLOUDINARY_SECRET}
 
   mail:
     host: smtp.gmail.com
