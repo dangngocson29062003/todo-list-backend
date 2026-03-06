@@ -126,6 +126,7 @@ public class AppService {
         return result;
     }
 
+<<<<<<< Updated upstream
     public void logout(String refreshToken,UUID userId) {
         String hashedToken=hashToken(refreshToken);
         RefreshToken rt = refreshTokenService.findByToken(hashedToken);
@@ -133,6 +134,10 @@ public class AppService {
             throw new BadRequestException("Invalid token");
         }
         refreshTokenService.revokeValidToken(hashToken(refreshToken), Instant.now());
+=======
+    public void logout(String refreshToken, UUID userId) {
+        refreshTokenService.delete(hashToken(refreshToken), userId);
+>>>>>>> Stashed changes
     }
 
     @Transactional
@@ -538,6 +543,15 @@ public class AppService {
     }
 
     //Files
+    @Transactional(readOnly = true)
+    public List<FileResponse> getFiles(Long taskId, UUID userId) {
+        Task task = taskService.getTask(taskId);
+        User user = userService.findById(userId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+
+        return fileService.getFiles(taskId).stream().map(FileResponse::toResponse).toList();
+    }
+
     @Transactional
     public FileResponse uploadFiles(Long taskId, UUID userId, MultipartFile file) {
         Task task = taskService.getTask(taskId);
@@ -557,6 +571,7 @@ public class AppService {
 
         fileService.delete(id, taskId);
     }
+
     /// /////////////////////
     public static String hashToken(String token) {
         try {
