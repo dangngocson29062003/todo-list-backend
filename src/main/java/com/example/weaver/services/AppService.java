@@ -125,13 +125,17 @@ public class AppService {
     }
 
     public void logout(String refreshToken,UUID userId) {
-        refreshTokenService.delete(hashToken(refreshToken), userId);
+        String hashedToken=hashToken(refreshToken);
+        RefreshToken rt = refreshTokenService.findByToken(hashedToken);
+        if(!rt.getUser().getId().equals(userId)){
+            throw new BadRequestException("Invalid token");
+        }
+        refreshTokenService.revokeValidToken(hashToken(refreshToken), Instant.now());
     }
 
     @Transactional
     public TokenResult getNewAccessToken(String oldRefreshToken,
                                          HttpServletRequest request) {
-        System.out.println(oldRefreshToken);
         if (oldRefreshToken == null) {
             throw new InvalidTokenException();
         }
@@ -298,14 +302,14 @@ public class AppService {
         ProjectMember newProjectMember = projectMemberService.addProjectMember(requester.getProject(), user, Role.VIEWER);
 
         ProjectResponse projectResponse = ProjectResponse.toResponse(requester.getProject());
-        MemberAddedEvent event = new MemberAddedEvent(
+        MemberEvent event = new MemberEvent(
                 newMemberId,
                 NotificationCode.MEMBER_ADDED,
                 projectResponse,
                 NotificationCategory.ANNOUNCEMENT,
                 Priority.NORMAL,
                 NotificationType.ANNOUNCEMENT);
-        outboxEventService.create(OutboxEventTopic.MemberAdded, event);
+        outboxEventService.create(OutboxEventTopic.MEMBER_ADDED, event);
 
         return ProjectMemberResponse.toResponse(newProjectMember);
     }
@@ -320,7 +324,19 @@ public class AppService {
             throw new ForbiddenException("You are not allowed to modify members role this projectResponse");
         }
         ProjectMember updatedMember = projectMemberService.updateProjectMemberRole(projectId, userId, newRole);
-        return ProjectMemberResponse.toResponse(updatedMember);
+
+        ProjectMemberResponse response= ProjectMemberResponse.toResponse(updatedMember);
+        MemberEvent event = new MemberEvent(
+                userId,
+                NotificationCode.MEMBER_ROLE_UPDATED,
+                response,
+                NotificationCategory.ANNOUNCEMENT,
+                Priority.NORMAL,
+                NotificationType.ANNOUNCEMENT
+        );
+        outboxEventService.create(OutboxEventTopic.MEMBER_ROLE_UPDATED, event);
+
+        return response;
     }
 
     @Transactional
@@ -376,7 +392,7 @@ public class AppService {
                 new NotificationCreatedEvent(userIds,
                         userNotifications.stream().map(UserNotification::getId).toList(),
                         code, payloadObject, category, priority.getRank(), type, notification.getCreatedAt());
-        outboxEventService.create(OutboxEventTopic.NotificationCreated, event);
+        outboxEventService.create(OutboxEventTopic.NOTIFICATION_CREATED, event);
     }
 
     public void markUserNotificationAsRead(UUID userId, Long userNotificationId) {
@@ -463,7 +479,7 @@ public class AppService {
                 Priority.HIGH,
                 NotificationType.ANNOUNCEMENT
         );
-        outboxEventService.create(OutboxEventTopic.TaskAssigned, taskAssignedEvent);
+        outboxEventService.create(OutboxEventTopic.TASK_ASSIGNED, taskAssignedEvent);
 
         return taskResponse;
     }
@@ -519,7 +535,7 @@ public class AppService {
         commentService.delete(comment);
     }
     /// /////////////////////
-    public String hashToken(String token) {
+    public static String hashToken(String token) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of()
@@ -529,7 +545,7 @@ public class AppService {
         }
     }
 
-    public String extractIp(HttpServletRequest request) {
+    public static String extractIp(HttpServletRequest request) {
         String header = request.getHeader("X-Forwarded-For");
         if (header != null && !header.isBlank()) {
             return header.split(",")[0].trim();
@@ -537,7 +553,7 @@ public class AppService {
         return request.getRemoteAddr();
     }
 
-    public void addRefreshTokenToCookie(String refreshToken,
+    public static void addRefreshTokenToCookie(String refreshToken,
                                         Instant expiryDate,
                                         HttpServletResponse response) {
         ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
@@ -551,7 +567,7 @@ public class AppService {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
-    private Duration cookieMaxAge(Instant expiryDate) {
+    private static Duration cookieMaxAge(Instant expiryDate) {
         Duration duration = Duration.between(Instant.now(), expiryDate);
         return duration.isNegative() ? Duration.ZERO : duration;
     }

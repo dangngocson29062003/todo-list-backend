@@ -43,7 +43,7 @@ public class UserController {
                 loginRequest.getRememberMe(),
                 request);
 
-        appService.addRefreshTokenToCookie(tokenResult.refreshToken(),
+        AppService.addRefreshTokenToCookie(tokenResult.refreshToken(),
                 tokenResult.expiryDate(), response);
 
         return new LoginResponse(tokenResult.accessToken(), tokenResult.refreshToken());
@@ -73,7 +73,7 @@ public class UserController {
                           HttpServletResponse response) throws IOException {
         TokenResult tokenResult= appService.getNewAccessToken(refreshToken, request);
 
-        appService.addRefreshTokenToCookie(tokenResult.refreshToken(),
+        AppService.addRefreshTokenToCookie(tokenResult.refreshToken(),
                 tokenResult.expiryDate(), response);
 
         return tokenResult.accessToken();

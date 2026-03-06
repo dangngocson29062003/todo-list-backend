@@ -1,6 +1,6 @@
 package com.example.weaver.services.Others;
 
-import com.example.weaver.dtos.events.MemberAddedEvent;
+import com.example.weaver.dtos.events.MemberEvent;
 import com.example.weaver.dtos.events.NotificationCreatedEvent;
 import com.example.weaver.dtos.events.TaskAssignedEvent;
 import com.example.weaver.dtos.responses.UserNotificationResponse;
@@ -21,7 +21,7 @@ public class KafkaEventConsumer {
     private final AppService appService;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
-    @KafkaListener(topics = "NotificationCreated")
+    @KafkaListener(topics = "notification.created")
     public void handleNotificationCreated(String payload) throws Exception {
         NotificationCreatedEvent event = objectMapper.readValue(payload, NotificationCreatedEvent.class);
         List<UUID> userIds = event.userIds();
@@ -42,13 +42,20 @@ public class KafkaEventConsumer {
         }
     }
 
-    @KafkaListener(topics = "MemberAdded")
+    @KafkaListener(topics = "member.added")
     public void handleMemberAdded(String payload) throws Exception {
-        MemberAddedEvent event = objectMapper.readValue(payload, MemberAddedEvent.class);
+        MemberEvent event = objectMapper.readValue(payload, MemberEvent.class);
         appService.createNotifications(List.of(event.userId()), event.code(),
                 event.projectResponse(), event.category(),event.priority(), event.type());
     }
-    @KafkaListener(topics = "TaskAssigned")
+    @KafkaListener(topics = "member.removed")
+    public void handleMemberUpdated(String payload) throws Exception {
+        MemberEvent event = objectMapper.readValue(payload, MemberEvent.class);
+        appService.createNotifications(List.of(event.userId()), event.code(),
+                event.projectResponse(), event.category(),event.priority(), event.type());
+    }
+
+    @KafkaListener(topics = "task.assigned")
     public void handleTaskAssigned(String payload) throws Exception {
         TaskAssignedEvent event = objectMapper.readValue(payload, TaskAssignedEvent.class);
         appService.createNotifications(event.userIds(), event.code(),

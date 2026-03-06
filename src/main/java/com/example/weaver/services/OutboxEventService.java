@@ -48,7 +48,7 @@ public class OutboxEventService {
     public void processSingleEvent(OutboxEvent event) {
         try {
             kafkaEventProducer.sendSync(
-                    event.getTopic().name(),
+                    event.getTopic().getTopic(),
                     event.getPayload()
             );
 

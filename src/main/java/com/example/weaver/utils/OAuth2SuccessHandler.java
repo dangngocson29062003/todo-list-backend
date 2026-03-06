@@ -7,15 +7,12 @@ import com.example.weaver.enums.UserStatus;
 import com.example.weaver.exceptions.ForbiddenException;
 import com.example.weaver.models.User;
 import com.example.weaver.services.AppService;
-import com.example.weaver.services.Others.JwtService;
 import com.example.weaver.services.RefreshTokenService;
 import com.example.weaver.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -24,7 +21,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
@@ -35,7 +31,6 @@ import java.util.UUID;
 public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     private final UserService userService;
     private final RefreshTokenService refreshTokenService;
-    private final AppService appService;
     @Value("${app.web-url}")
     private String webUrl;
 
@@ -73,14 +68,14 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         }
 
         String refreshToken = UUID.randomUUID().toString();
-        String ip = appService.extractIp(request);
+        String ip = AppService.extractIp(request);
         String device = request.getHeader("User-Agent");
 
         Instant expiryDate = Instant.now().plus(7, ChronoUnit.DAYS);
-        refreshTokenService.save(appService.hashToken(refreshToken), user.getId(), expiryDate, ip, device);
+        refreshTokenService.save(AppService.hashToken(refreshToken), user.getId(), expiryDate, ip, device);
 
         String redirectUrl = webUrl + "/oauth/success";
-        appService.addRefreshTokenToCookie(refreshToken,expiryDate,response);
+        AppService.addRefreshTokenToCookie(refreshToken,expiryDate,response);
 
         //redirect to frontend then call /refresh to get access token
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
