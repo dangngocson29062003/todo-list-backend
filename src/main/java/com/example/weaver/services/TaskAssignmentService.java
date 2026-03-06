@@ -74,10 +74,13 @@ public class TaskAssignmentService {
     }
 
     public void unassign(Task task, UUID userId) {
-        TaskAssignment taskAssignment = taskAssignmentRepository.findTaskAssignmentByTask_IdAndUser_Id(task.getId(), userId).orElseThrow(() -> new NotFoundException("User is not assigned to this task"));
-
+        TaskAssignment taskAssignment = checkAssigner(userId, task.getId());
         taskAssignmentRepository.delete(taskAssignment);
     }
 
-
+    public TaskAssignment checkAssigner(UUID userId, Long taskId) {
+        return taskAssignmentRepository
+                .findTaskAssignmentByTask_IdAndUser_Id(taskId, userId)
+                .orElseThrow(() -> new NotFoundException("User is not assigned to this task"));
+    }
 }

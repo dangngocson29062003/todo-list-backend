@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -55,6 +56,7 @@ public class AppService {
     private final RefreshTokenService refreshTokenService;
     private final NotificationService notificationService;
     private final UserNotificationService userNotificationService;
+    private final FileService fileService;
 
     private final OutboxEventService outboxEventService;
     private final PasswordEncoder passwordEncoder;
@@ -533,6 +535,27 @@ public class AppService {
         Comment comment = commentService.checkAuthor(id, userId);
 
         commentService.delete(comment);
+    }
+
+    //Files
+    @Transactional
+    public FileResponse uploadFiles(Long taskId, UUID userId, MultipartFile file) {
+        Task task = taskService.getTask(taskId);
+        User user = userService.findById(userId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+        taskAssignmentService.checkAssigner(userId, taskId);
+
+        return FileResponse.toResponse(fileService.upload(task, user, file));
+    }
+
+    @Transactional
+    public void deleteFile(Long taskId, UUID userId, UUID id) {
+        Task task = taskService.getTask(taskId);
+        User user = userService.findById(userId);
+        projectMemberService.checkRole(task.getProject().getId(), userId);
+        taskAssignmentService.checkAssigner(userId, taskId);
+
+        fileService.delete(id, taskId);
     }
     /// /////////////////////
     public static String hashToken(String token) {

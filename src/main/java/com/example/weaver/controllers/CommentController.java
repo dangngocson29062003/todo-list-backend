@@ -33,6 +33,7 @@ public class CommentController {
         return appService.updateComment(taskId, id, authUser.getId(), content);
     }
 
+
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long taskId, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
         appService.deleteComment(taskId, authUser.getId(), id);
