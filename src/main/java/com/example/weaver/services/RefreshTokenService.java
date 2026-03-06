@@ -8,6 +8,7 @@ import com.example.weaver.repositories.RefreshTokenRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -18,6 +19,7 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final EntityManager entityManager;
 
+    @Transactional
     public void save(String hashedToken, UUID userId, Instant expiryDate,
                              String ipAddress, String deviceInfo) {
         checkIfExceedTokenLimit(userId);
@@ -30,6 +32,9 @@ public class RefreshTokenService {
                 .deviceInfo(deviceInfo)
                 .build();
         refreshTokenRepository.save(refreshToken);
+    }
+    public void delete(String hashedToken, UUID userId) {
+        refreshTokenRepository.deleteByHashedTokenAndUserId(hashedToken,userId);
     }
 
     private void checkIfExceedTokenLimit(UUID userId) {

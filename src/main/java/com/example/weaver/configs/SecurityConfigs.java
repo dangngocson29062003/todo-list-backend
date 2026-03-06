@@ -44,7 +44,6 @@ public class SecurityConfigs {
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
-                //sua social login
                 .oauth2Login(oauth -> oauth.successHandler(oAuth2SuccessHandler))
                 .securityContext(context -> context.requireExplicitSave(false))
                 .build();

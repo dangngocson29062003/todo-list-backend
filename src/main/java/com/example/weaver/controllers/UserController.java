@@ -49,6 +49,12 @@ public class UserController {
         return new LoginResponse(tokenResult.accessToken(), tokenResult.refreshToken());
     }
 
+    @PostMapping("/logout")
+    public void logout(@CookieValue(value = "refreshToken",required = false) String refreshToken,
+                       @AuthenticationPrincipal AuthUser authUser) {
+        appService.logout(refreshToken,authUser.getId());
+    }
+
     @GetMapping("/verify")
     public void verify(@RequestParam String token,
                        HttpServletResponse response) throws IOException {
