@@ -126,6 +126,7 @@ public class AppService {
         return result;
     }
 
+<<<<<<< Updated upstream
     public void logout(String refreshToken,UUID userId) {
         String hashedToken=hashToken(refreshToken);
         RefreshToken rt = refreshTokenService.findByToken(hashedToken);
@@ -133,6 +134,10 @@ public class AppService {
             throw new BadRequestException("Invalid token");
         }
         refreshTokenService.revokeValidToken(hashToken(refreshToken), Instant.now());
+=======
+    public void logout(String refreshToken, UUID userId) {
+        refreshTokenService.delete(hashToken(refreshToken), userId);
+>>>>>>> Stashed changes
     }
 
     @Transactional
