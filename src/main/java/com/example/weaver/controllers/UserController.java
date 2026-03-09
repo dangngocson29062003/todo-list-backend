@@ -7,6 +7,7 @@ import com.example.weaver.dtos.requests.LoginRequest;
 import com.example.weaver.dtos.requests.RegisterRequest;
 import com.example.weaver.dtos.responses.ActiveSessionResponse;
 import com.example.weaver.dtos.responses.LoginResponse;
+import com.example.weaver.dtos.responses.UserResponse;
 import com.example.weaver.services.AppService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -49,6 +50,11 @@ public class UserController {
         return new LoginResponse(tokenResult.accessToken(), tokenResult.refreshToken());
     }
 
+    @GetMapping("/getme")
+    public UserResponse getUser(@AuthenticationPrincipal AuthUser authUser){
+        return appService.getMe(authUser.getId());
+    }
+
     @PostMapping("/logout")
     public void logout(@CookieValue(value = "refreshToken",required = false) String refreshToken,
                        @AuthenticationPrincipal AuthUser authUser) {
@@ -64,7 +70,7 @@ public class UserController {
         //   status=SUCCESS->show 'Account has been verified, please loggin'
         //   status=USED-> show 'Account already verified'
         //   status=NOT_FOUND-> show 'Invalid token'
-        response.sendRedirect(webUrl + "/email-verified?status=" + result.status());
+        response.sendRedirect(webUrl + "/email/verify?status=" + result.status());
     }
 
     @PostMapping("/refresh")

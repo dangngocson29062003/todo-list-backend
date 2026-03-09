@@ -31,7 +31,7 @@ public class EmailVerificationTokenService {
     public void sendVerificationEmail(UUID userId, String email) {
         String token = create(userId);
         String verificationUrl =
-                serverUrl+"/user/verify?token=" + token;
+                serverUrl+"/users/verify?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);

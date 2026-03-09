@@ -113,6 +113,11 @@ public class AppService {
 //        emailService.sendVerificationEmail(user);
     }
 
+    public UserResponse getMe(UUID userId){
+        User user=userService.findById(userId);
+        return UserResponse.toResponse(user);
+    }
+
     @Transactional
     public EmailVerificationResult verifyEmail(String token) {
 
