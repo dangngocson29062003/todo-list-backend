@@ -100,7 +100,7 @@ public class AppService {
 
 //        addRefreshTokenToCookie(refreshToken,expiryDate,response);
 
-        return new TokenResult(accessToken, refreshToken, expiryDate);
+        return new TokenResult(UserResponse.toResponse(user),accessToken, refreshToken, expiryDate);
     }
 
     @Transactional
@@ -167,7 +167,7 @@ public class AppService {
 //        addRefreshTokenToCookie(newRefreshToken,result.expiryDate(),response);
 
         String accessToken = jwtService.generateAccessToken(user);
-        return new TokenResult(accessToken, newRefreshToken, refreshToken.getExpiryDate());
+        return new TokenResult(null,accessToken, newRefreshToken, refreshToken.getExpiryDate());
 
     }
 

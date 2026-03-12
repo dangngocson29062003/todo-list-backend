@@ -47,10 +47,10 @@ public class UserController {
         AppService.addRefreshTokenToCookie(tokenResult.refreshToken(),
                 tokenResult.expiryDate(), response);
 
-        return new LoginResponse(tokenResult.accessToken(), tokenResult.refreshToken());
+        return new LoginResponse(tokenResult.accessToken(), tokenResult.userResponse());
     }
 
-    @GetMapping("/getme")
+    @GetMapping("/getMe")
     public UserResponse getUser(@AuthenticationPrincipal AuthUser authUser){
         return appService.getMe(authUser.getId());
     }
