@@ -31,11 +31,11 @@ public class ScheduleService {
         refreshTokenService.deleteByExpiryDateBefore(Instant.now());
     }
 
-    @Scheduled(fixedDelay = 1000)
-    @Transactional
-    public void processPendingEvents(){
-        outboxEventService.processPendingEvents();
-    }
+//    @Scheduled(fixedDelay = 1000)
+//    @Transactional
+//    public void processPendingEvents(){
+//        outboxEventService.processPendingEvents();
+//    }
 
     @Scheduled(fixedDelay = 300000)
     @Transactional

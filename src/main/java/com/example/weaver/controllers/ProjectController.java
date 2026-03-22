@@ -28,6 +28,12 @@ public class ProjectController {
         return appService.getProjectsByUserId(authUser.getId());
     }
 
+    @GetMapping("/{id}/all-members")
+    public ProjectResponse getProjectWithMember(@PathVariable UUID id,
+                                                @AuthenticationPrincipal AuthUser authUser) {
+        return appService.getProjectWithMembers(id);
+    }
+
 //    @PostMapping
 //    public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request,
 //                                 @AuthenticationPrincipal AuthUser authUser) {
