@@ -31,7 +31,6 @@ public class ProjectMemberService {
         if(!projectMember.getRole().equals(newRole)){
             projectMember.setRole(newRole);
         }
-//        return projectMemberRepository.save(projectMember);
         return projectMember;
     }
     public void removeProjectMember(UUID projectId, UUID userId) {
@@ -43,10 +42,7 @@ public class ProjectMemberService {
         return projectMemberRepository.findAllByProject_Id(projectId);
     }
 
-    public Project getProjectWithMembers(UUID projectId){
-        return projectMemberRepository.getProjectWithMembers(projectId)
-                .orElseThrow(()->new BadRequestException("No project members found"));
-    }
+
 
     public ProjectMember getProjectMember(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProject_IdAndUser_Id(projectId,userId)

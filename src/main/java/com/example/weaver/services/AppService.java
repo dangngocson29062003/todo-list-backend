@@ -5,10 +5,7 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
 import com.example.weaver.dtos.others.results.TokenResult;
-import com.example.weaver.dtos.requests.CommentRequest;
-import com.example.weaver.dtos.requests.CreateTaskRequest;
-import com.example.weaver.dtos.requests.TaskAssignmentRequest;
-import com.example.weaver.dtos.requests.UpdateTaskRequest;
+import com.example.weaver.dtos.requests.*;
 import com.example.weaver.dtos.responses.*;
 import com.example.weaver.enums.*;
 import com.example.weaver.exceptions.BadRequestException;
@@ -251,54 +248,42 @@ public class AppService {
     }
 
     //PROJECT
-//    @Transactional(readOnly = true)
-    public ProjectResponse getProject(UUID projectId, UUID requesterId) {
-        ProjectMember member = projectMemberService.getProjectMember(projectId, requesterId);
-        return ProjectResponse.toResponse(member.getProject());
-    }
-
-    public ProjectResponse getProjectWithMembers(UUID projectId){
-        return ProjectResponse.toResponse(projectMemberService.getProjectWithMembers(projectId));
+    @Transactional(readOnly = true)
+    public List<ProjectSummaryResponse> getProjects(UUID userId){
+        return projectService.getProjects(userId);
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectResponse> getProjectsByUserId(UUID userId) {
-//        Object object = projectMemberService.getProjectsByUserId(userId);
-//        System.out.println(object);
-            return null;
-//        return projectMemberService.getProjectsByUserId(userId)
-//                .stream()
-//                .map(ProjectResponse::toResponse)
-//                .toList();
+    public ProjectDetailResponse getProject(UUID userId, UUID projectId) {
+        return ProjectDetailResponse.toResponse(projectService.getProject(projectId, userId));
     }
 
     @Transactional
-    public ProjectResponse createProject(UUID createdBy, String name, String description, Instant finishedAt) {
-        if (name == null || name.length() < 3)
-            throw new BadRequestException("Please enter a name of at least 3 characters");
-        User user = userService.findById(createdBy);
-        Project project = projectService.create(createdBy, name, description, finishedAt);
-        projectMemberService.addProjectMember(project, user, Role.MANAGER);
-        return ProjectResponse.toResponse(project);
+    public ProjectDetailResponse createProject(CreateProjectRequest request, UUID createdBy) {
+        User creator = userService.findById(createdBy);
+        Project project = projectService.createProject(request, creator);
+        ProjectMember manager = projectMemberService.addProjectMember(project, creator, Role.MANAGER);
+        project.getMembers().add(manager);
+        return ProjectDetailResponse.toResponse(project);
     }
 
     @Transactional
-    public ProjectResponse updateProject(UUID projectId, UUID requesterId, String name, String description, Instant finishedAt) {
+    public ProjectDetailResponse updateProject(UpdateProjectRequest request, UUID projectId, UUID userId) {
+        ProjectMember requester = projectMemberService.getProjectMemberWithProjectLoaded(projectId, userId);
+        if (!requester.getRole().equals(Role.MANAGER)) {
+            throw new ForbiddenException("You are not allowed to update this projectResponse");
+        }
+        return ProjectDetailResponse.toResponse(
+                projectService.updateProject(projectId, request, userId));
+    }
+
+    @Transactional
+    public void deleteProject(UUID projectId, UUID requesterId) {
         ProjectMember requester = projectMemberService.getProjectMemberWithProjectLoaded(projectId, requesterId);
         if (!requester.getRole().equals(Role.MANAGER)) {
             throw new ForbiddenException("You are not allowed to update this projectResponse");
         }
-        return ProjectResponse.toResponse(
-                projectService.update(requester.getProject(), name, description, finishedAt));
-    }
-
-    @Transactional
-    public void deleteProject(UUID id, UUID requesterId) {
-        Project project = projectService.findById(id);
-        if (!requesterId.equals(project.getCreatedBy().getId())) {
-            throw new ForbiddenException("You are not allowed to delete this projectResponse");
-        }
-        projectService.delete(project);
+        projectService.deleteProject(projectId);
     }
 
     //PROJECT_MEMBER
@@ -314,11 +299,11 @@ public class AppService {
         User user = userService.findById(newMemberId);
         ProjectMember newProjectMember = projectMemberService.addProjectMember(requester.getProject(), user, Role.VIEWER);
 
-        ProjectResponse projectResponse = ProjectResponse.toResponse(requester.getProject());
+        ProjectDetailResponse projectDetailResponse = ProjectDetailResponse.toResponse(requester.getProject());
         MemberEvent event = new MemberEvent(
                 newMemberId,
                 NotificationCode.MEMBER_ADDED,
-                projectResponse,
+                projectDetailResponse,
                 NotificationCategory.ANNOUNCEMENT,
                 Priority.NORMAL,
                 NotificationType.ANNOUNCEMENT);

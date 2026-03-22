@@ -1,5 +1,6 @@
 package com.example.weaver.repositories;
 
+import com.example.weaver.enums.Role;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -25,11 +26,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
 
-    @Query("""
-                SELECT p
-                FROM projects p
-                LEFT JOIN FETCH p.members
-                WHERE p.id = :projectId
-            """)
-    Optional<Project> getProjectWithMembers(UUID projectId);
+    @Query("SELECT pm.role FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id = :userId")
+    Optional<Role> findRoleByProjectIdAndUserId(UUID projectId, UUID userId);
+
 }

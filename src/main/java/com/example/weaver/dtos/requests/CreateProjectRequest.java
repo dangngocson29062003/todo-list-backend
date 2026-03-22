@@ -2,30 +2,24 @@ package com.example.weaver.dtos.requests;
 
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.Stage;
-import com.example.weaver.models.Message;
-import com.example.weaver.models.Task;
 import com.example.weaver.models.User;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import net.minidev.json.annotate.JsonIgnore;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ProjectRequest {
+@Getter
+@Setter
+public class CreateProjectRequest {
 
-    @NotEmpty
+    @NotBlank(message = "Project name is required")
+    @Size(min = 3, message = "Name must be at least 3 characters")
     private String name;
     private String description;
 
@@ -41,12 +35,10 @@ public class ProjectRequest {
     private String githubUrl;
     private String figmaUrl;
 
-    @NotEmpty
+    @NotNull(message = "Start date is required")
     private Instant startDate;
-    @NotEmpty
+    @NotNull(message = "End date is required")
     private Instant endDate;
-    private Instant createdAt;
-    private Instant updatedAt;
 
     private User createdBy;
 }

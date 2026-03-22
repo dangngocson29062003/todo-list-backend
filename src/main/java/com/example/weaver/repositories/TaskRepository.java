@@ -30,5 +30,4 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             Priority priority,
             TaskType type
     );
-
 }

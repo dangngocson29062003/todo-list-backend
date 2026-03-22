@@ -3,14 +3,13 @@ package com.example.weaver.dtos.responses;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.Stage;
 import com.example.weaver.models.Project;
-import com.example.weaver.models.User;
-import jakarta.validation.constraints.NotEmpty;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public record ProjectResponse(
+public record ProjectDetailResponse(
         UUID id,
         String name,
         String description,
@@ -36,8 +35,8 @@ public record ProjectResponse(
         List<ProjectMemberResponse> members
 ) {
 
-    public static ProjectResponse toResponse(Project p) {
-        return new ProjectResponse(
+    public static ProjectDetailResponse toResponse(Project p) {
+        return new ProjectDetailResponse(
                 p.getId(),
                 p.getName(),
                 p.getDescription(),
@@ -53,7 +52,7 @@ public record ProjectResponse(
                 p.getCreatedAt(),
                 p.getUpdatedAt(),
                 UserResponse.toResponse(p.getCreatedBy()),
-                p.getMembers().stream().map(ProjectMemberResponse::toResponse).toList()
+                p.getMembers() != null ? p.getMembers().stream().map(ProjectMemberResponse::toResponse).toList() : new ArrayList<>()
         );
     }
 }
