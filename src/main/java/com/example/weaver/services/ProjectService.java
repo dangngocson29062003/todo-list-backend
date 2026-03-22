@@ -20,17 +20,22 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final EntityManager entityManager;
 
-    public Project create(UUID createdBy, String name,String description, Instant finishedAt) {
+//    public List<Project> getProjects(UUID userId) {
+//        System.out.println(userId + "ABC");
+//        return projectMemberRepository.(userId);
+//    }
+
+    public Project create(UUID createdBy, String name,String description, Instant endDate) {
         User userRef=entityManager.getReference(User.class, createdBy);
         Project project=Project.builder()
                 .createdBy(userRef)
                 .name(name)
                 .description(description)
-                .finishedAt(finishedAt)
+                .endDate(endDate)
                 .build();
         return projectRepository.save(project);
     }
-    public Project update(Project project, String name,String description,Instant finishedAt) {
+    public Project update(Project project, String name,String description,Instant endDate) {
         if (name != null) {
             if (name.length() < 3) {
                 throw new BadRequestException("Project name must be at least 3 characters");
@@ -40,7 +45,7 @@ public class ProjectService {
             }
         }
         project.setDescription(description);
-        project.setFinishedAt(finishedAt);
+        project.setEndDate(endDate);
 
 //        return projectRepository.save(projectResponse);
         return project;

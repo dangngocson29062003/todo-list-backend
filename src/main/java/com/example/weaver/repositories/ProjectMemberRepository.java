@@ -22,12 +22,13 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     List<ProjectMember> findAllByProject_Id(UUID projectId);
 
-    @Query("""
-                SELECT pm.project
-                FROM ProjectMember pm
-                WHERE pm.user.id=:userId
-            """)
-    List<Project> findProjectsByUserId(UUID userId);
+    @Query(value = """
+        SELECT DISTINCT p
+        FROM projects p
+        LEFT JOIN FETCH p.members m
+        WHERE m.user.id = :userId
+""")
+    Object findProjectsByUserId(UUID userId);
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
 }

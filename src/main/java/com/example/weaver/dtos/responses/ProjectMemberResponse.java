@@ -13,9 +13,7 @@ public record ProjectMemberResponse(
         String email,
         String nickname,
         String avatarUrl,
-
         UUID projectId,
-
         String name,
         Role role,
         Instant createdAt

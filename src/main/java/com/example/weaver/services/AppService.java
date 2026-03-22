@@ -259,13 +259,13 @@ public class AppService {
 
     @Transactional(readOnly = true)
     public List<ProjectResponse> getProjectsByUserId(UUID userId) {
-        List<Project> projects = projectMemberService.getProjectsByUserId(userId);
-
-        List<ProjectResponse> projectResponses = new ArrayList<>();
-        for (Project project : projects) {
-            projectResponses.add(ProjectResponse.toResponse(project));
-        }
-        return projectResponses;
+        Object object = projectMemberService.getProjectsByUserId(userId);
+        System.out.println(object);
+            return null;
+//        return projectMemberService.getProjectsByUserId(userId)
+//                .stream()
+//                .map(ProjectResponse::toResponse)
+//                .toList();
     }
 
     @Transactional

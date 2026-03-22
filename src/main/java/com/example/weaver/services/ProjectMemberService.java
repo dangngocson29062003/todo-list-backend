@@ -43,9 +43,19 @@ public class ProjectMemberService {
     public List<ProjectMember> getProjectMembers(UUID projectId) {
         return projectMemberRepository.findAllByProject_Id(projectId);
     }
-    public List<Project> getProjectsByUserId(UUID userId){
-        return projectMemberRepository.findProjectsByUserId(userId);
+    public Object getProjectsByUserId(UUID userId){
+        try {
+            Object projects =  projectMemberRepository.findProjectsByUserId(userId);
+            return projects;
+        }
+        catch (Exception ignored) {
+            ignored.printStackTrace();
+        }
+
+        return List.of();
     }
+
+
     public ProjectMember getProjectMember(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProject_IdAndUser_Id(projectId,userId)
                 .orElseThrow(()->new BadRequestException("User does not belong to this project"));

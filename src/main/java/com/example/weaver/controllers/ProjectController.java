@@ -28,22 +28,22 @@ public class ProjectController {
         return appService.getProjectsByUserId(authUser.getId());
     }
 
-    @PostMapping
-    public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request,
-                                 @AuthenticationPrincipal AuthUser authUser) {
-        return appService.createProject(authUser.getId(),
-                request.getName().trim(),
-                request.getDescription()!=null? request.getDescription().trim():null,
-                request.getFinishedAt()!=null? request.getFinishedAt():null);
-    }
+//    @PostMapping
+//    public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request,
+//                                 @AuthenticationPrincipal AuthUser authUser) {
+//        return appService.createProject(authUser.getId(),
+//                request.getName().trim(),
+//                request.getDescription()!=null? request.getDescription().trim():null,
+//                request.getFinishedAt()!=null? request.getFinishedAt():null);
+//    }
 
-    @PutMapping("/{id}")
-    public ProjectResponse updateProject(@PathVariable UUID id,
-                                 @Valid @RequestBody ProjectRequest request,
-                                 @AuthenticationPrincipal AuthUser authUser) {
-        return appService.updateProject(id,authUser.getId(),
-                request.getName().trim(), request.getDescription().trim(), request.getFinishedAt());
-    }
+//    @PutMapping("/{id}")
+//    public ProjectResponse updateProject(@PathVariable UUID id,
+//                                 @Valid @RequestBody ProjectRequest request,
+//                                 @AuthenticationPrincipal AuthUser authUser) {
+//        return appService.updateProject(id,authUser.getId(),
+//                request.getName().trim(), request.getDescription().trim(), request.getFinishedAt());
+//    }
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable UUID id,
                               @AuthenticationPrincipal AuthUser authUser) {
