@@ -17,7 +17,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "projects")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

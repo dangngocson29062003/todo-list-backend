@@ -2,7 +2,6 @@ package com.example.weaver.services;
 
 import com.example.weaver.enums.Role;
 import com.example.weaver.exceptions.BadRequestException;
-import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.User;
@@ -43,18 +42,11 @@ public class ProjectMemberService {
     public List<ProjectMember> getProjectMembers(UUID projectId) {
         return projectMemberRepository.findAllByProject_Id(projectId);
     }
-    public Object getProjectsByUserId(UUID userId){
-        try {
-            Object projects =  projectMemberRepository.findProjectsByUserId(userId);
-            return projects;
-        }
-        catch (Exception ignored) {
-            ignored.printStackTrace();
-        }
 
-        return List.of();
+    public Project getProjectWithMembers(UUID projectId){
+        return projectMemberRepository.getProjectWithMembers(projectId)
+                .orElseThrow(()->new BadRequestException("No project members found"));
     }
-
 
     public ProjectMember getProjectMember(UUID projectId, UUID userId) {
         return projectMemberRepository.findByProject_IdAndUser_Id(projectId,userId)

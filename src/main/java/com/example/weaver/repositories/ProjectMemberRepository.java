@@ -2,7 +2,6 @@ package com.example.weaver.repositories;
 
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,13 +21,15 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     List<ProjectMember> findAllByProject_Id(UUID projectId);
 
-    @Query(value = """
-        SELECT DISTINCT p
-        FROM projects p
-        LEFT JOIN FETCH p.members m
-        WHERE m.user.id = :userId
-""")
-    Object findProjectsByUserId(UUID userId);
+    List<ProjectMember> findByUser_Id(UUID userId);
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
+
+    @Query("""
+                SELECT p
+                FROM projects p
+                LEFT JOIN FETCH p.members
+                WHERE p.id = :projectId
+            """)
+    Optional<Project> getProjectWithMembers(UUID projectId);
 }

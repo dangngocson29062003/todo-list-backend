@@ -257,10 +257,14 @@ public class AppService {
         return ProjectResponse.toResponse(member.getProject());
     }
 
+    public ProjectResponse getProjectWithMembers(UUID projectId){
+        return ProjectResponse.toResponse(projectMemberService.getProjectWithMembers(projectId));
+    }
+
     @Transactional(readOnly = true)
     public List<ProjectResponse> getProjectsByUserId(UUID userId) {
-        Object object = projectMemberService.getProjectsByUserId(userId);
-        System.out.println(object);
+//        Object object = projectMemberService.getProjectsByUserId(userId);
+//        System.out.println(object);
             return null;
 //        return projectMemberService.getProjectsByUserId(userId)
 //                .stream()
