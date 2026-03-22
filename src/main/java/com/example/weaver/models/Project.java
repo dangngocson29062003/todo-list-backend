@@ -10,6 +10,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -31,7 +33,19 @@ public class Project {
     private String name;
     private String description;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
     private Instant finishedAt;
+
+    @Column(columnDefinition = "json")
+    private List<String> links;
+
+    @Column(columnDefinition = "json")
+    private List<String> tags;
+
+    @OneToMany(mappedBy = "project")
+    private Set<ProjectMember> members=new HashSet<>();
 
     @OneToMany(mappedBy = "project")
     private Set<Task> tasks;

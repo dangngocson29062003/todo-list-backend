@@ -5,9 +5,7 @@ import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.TokenResult;
 import com.example.weaver.dtos.requests.LoginRequest;
 import com.example.weaver.dtos.requests.RegisterRequest;
-import com.example.weaver.dtos.responses.ActiveSessionResponse;
-import com.example.weaver.dtos.responses.LoginResponse;
-import com.example.weaver.dtos.responses.UserResponse;
+import com.example.weaver.dtos.responses.*;
 import com.example.weaver.services.AppService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -43,6 +41,7 @@ public class UserController {
                 loginRequest.getPassword(),
                 loginRequest.getRememberMe(),
                 request);
+
 
         AppService.addRefreshTokenToCookie(tokenResult.refreshToken(),
                 tokenResult.expiryDate(), response);

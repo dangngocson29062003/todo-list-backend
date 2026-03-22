@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,5 +45,18 @@ public class ProjectMemberController {
                                     @PathVariable UUID projectId,
                                     @PathVariable UUID userId){
         appService.removeProjectMember(authUser.getId(),projectId,userId);
+    }
+
+    @PostMapping("/{userId}/pin")
+    public void updateProjectPinStatus(@PathVariable UUID projectId,
+                                   @PathVariable UUID userId){
+        appService.updateProjectPinStatus(projectId,userId);
+    }
+
+    @PostMapping("/{userId}/last-access")
+    public void updateProjectLastAccess(@PathVariable UUID projectId,
+                                   @PathVariable UUID userId,
+                                   @RequestParam Instant lastAccess){
+        appService.updateProjectLastAccess(projectId,userId,lastAccess);
     }
 }

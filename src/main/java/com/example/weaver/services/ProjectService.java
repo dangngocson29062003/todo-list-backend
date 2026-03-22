@@ -1,7 +1,6 @@
 package com.example.weaver.services;
 
 import com.example.weaver.exceptions.BadRequestException;
-import com.example.weaver.exceptions.ForbiddenException;
 import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.User;
@@ -11,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,10 +18,9 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final EntityManager entityManager;
 
-    public Project create(UUID createdBy, String name,String description, Instant finishedAt) {
-        User userRef=entityManager.getReference(User.class, createdBy);
+    public Project create(User user, String name,String description, Instant finishedAt) {
         Project project=Project.builder()
-                .createdBy(userRef)
+                .createdBy(user)
                 .name(name)
                 .description(description)
                 .finishedAt(finishedAt)
@@ -51,6 +48,12 @@ public class ProjectService {
     }
 
     public Project findById(UUID id) {
-        return projectRepository.findById(id).orElseThrow(()-> new NotFoundException("Project not found"));
+        return projectRepository.findById(id)
+                .orElseThrow(()-> new NotFoundException("Project not found"));
+    }
+
+    public Project getWithCreatedByAndMembersData(UUID projectId) {
+        return projectRepository.getWithCreatedByAndMembersData(projectId)
+                .orElseThrow(()-> new NotFoundException("Project not found"));
     }
 }

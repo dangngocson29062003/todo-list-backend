@@ -2,13 +2,17 @@ package com.example.weaver.controllers;
 
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.ProjectRequest;
-import com.example.weaver.dtos.responses.ProjectResponse;
+import com.example.weaver.dtos.responses.ProjectDetailResponse;
+import com.example.weaver.dtos.responses.ProjectSimpleResponse;
+import com.example.weaver.dtos.responses.ProjectSimpleResponses;
+import com.example.weaver.models.Project;
 import com.example.weaver.services.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,18 +23,22 @@ public class ProjectController {
     private final AppService appService;
 
     @GetMapping("/{id}")
-    public ProjectResponse getProject(@PathVariable UUID id,
-                                      @AuthenticationPrincipal AuthUser authUser) {
-        return appService.getProject(id,authUser.getId());
+    public ProjectDetailResponse getProject(@PathVariable UUID id,
+                                            @AuthenticationPrincipal AuthUser authUser) {
+        return appService.getProjectDetail(id,authUser.getId());
     }
-    @GetMapping
-    public List<ProjectResponse> getAllProjects(@AuthenticationPrincipal AuthUser authUser) {
-        return appService.getProjectsByUserId(authUser.getId());
+    @GetMapping("/simple")
+    public ProjectSimpleResponses getAllProjects(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(name = "limit",required = false)  Integer limit,
+            @RequestParam(name = "lastAccessCursor",required = false) Instant lastLastAccessCursor,
+            @RequestParam(name = "createdAtCursor",required = false) Instant lastCreatedAtCursor) {
+        return appService.getProjectsByUserId(authUser.getId(),lastLastAccessCursor,lastCreatedAtCursor,limit);
     }
 
     @PostMapping
-    public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request,
-                                 @AuthenticationPrincipal AuthUser authUser) {
+    public ProjectDetailResponse createProject(@Valid @RequestBody ProjectRequest request,
+                                               @AuthenticationPrincipal AuthUser authUser) {
         return appService.createProject(authUser.getId(),
                 request.getName().trim(),
                 request.getDescription()!=null? request.getDescription().trim():null,
@@ -38,9 +46,9 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
-    public ProjectResponse updateProject(@PathVariable UUID id,
-                                 @Valid @RequestBody ProjectRequest request,
-                                 @AuthenticationPrincipal AuthUser authUser) {
+    public ProjectDetailResponse updateProject(@PathVariable UUID id,
+                                               @Valid @RequestBody ProjectRequest request,
+                                               @AuthenticationPrincipal AuthUser authUser) {
         return appService.updateProject(id,authUser.getId(),
                 request.getName().trim(), request.getDescription().trim(), request.getFinishedAt());
     }
