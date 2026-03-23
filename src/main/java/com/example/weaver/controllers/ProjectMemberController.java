@@ -55,8 +55,7 @@ public class ProjectMemberController {
 
     @PostMapping("/{userId}/last-access")
     public void updateProjectLastAccess(@PathVariable UUID projectId,
-                                   @PathVariable UUID userId,
-                                   @RequestParam Instant lastAccess){
-        appService.updateProjectLastAccess(projectId,userId,lastAccess);
+                                   @PathVariable UUID userId){
+        appService.updateProjectLastAccess(projectId,userId);
     }
 }

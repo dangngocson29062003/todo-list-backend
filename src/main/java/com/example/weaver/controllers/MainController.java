@@ -23,7 +23,8 @@ public class MainController {
             @RequestParam(required = false) Integer limit) {
         ProjectSimpleResponses projectsData=
                 appService.getProjectsByUserId(authUser.getId(),null,null,limit);
-        TaskSimpleResponses tasksData =appService.getAssignedTasks(authUser.getId(),null,limit);
+        TaskSimpleResponses tasksData =
+                appService.getAssignedTasks(authUser.getId(),null,null,limit);
         return new HomeResponse(projectsData, tasksData);
     }
 }

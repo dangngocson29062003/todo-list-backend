@@ -17,7 +17,8 @@ import java.time.Instant;
 @Table(
         name = "task_assignments",
         indexes = {
-                @Index(name = "idx_task_assignment_user_id_last_access", columnList = "user_id,last_access")
+                @Index(name = "idx_task_assignment_user_id_last_access",
+                        columnList = "user_id,last_access DESC")
         }
 )
 public class TaskAssignment {
@@ -38,17 +39,14 @@ public class TaskAssignment {
     @JoinColumn(name = "assignedBy", nullable = false)
     private User assignedBy;
 
-    @Column(name = "task_index")
-    private Integer taskIndex;
-
     @Column(name = "is_pinned")
-    private Boolean isPinned=false;
+    private boolean isPinned=false;
 
     @Column(name = "last_access")
     private Instant lastAccess;
 
     @Column(name = "is_favorited")
-    private Boolean isFavorited;
+    private boolean isFavorited;
 
     @CreationTimestamp
     private Instant assignedAt;

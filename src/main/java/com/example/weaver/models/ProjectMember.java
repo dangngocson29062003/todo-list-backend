@@ -57,14 +57,13 @@ public class ProjectMember {
     private Role role;
 
     @Column(name = "is_pinned")
-    private Boolean isPinned = false;
-
+    private boolean isPinned = false;
 
     @Column(name = "last_access")
     private Instant lastAccess;
 
     @Column(name = "is_favorited")
-    private Boolean isFavorited;
+    private boolean isFavorited;
 
     @CreationTimestamp
     private Instant createdAt;

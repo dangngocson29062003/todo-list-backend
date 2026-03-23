@@ -1,6 +1,7 @@
 package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
+import com.example.weaver.dtos.responses.ProjectSimpleResponse;
 import com.example.weaver.dtos.responses.TaskSimpleResponse;
 import com.example.weaver.dtos.responses.TaskSimpleResponses;
 import com.example.weaver.exceptions.BadRequestException;
@@ -12,6 +13,7 @@ import com.example.weaver.repositories.ProjectMemberRepository;
 import com.example.weaver.repositories.TaskAssignmentRepository;
 import com.example.weaver.repositories.TaskRepository;
 import com.example.weaver.repositories.UserRepository;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,6 +39,8 @@ public class TaskAssignmentService {
 
     @Autowired
     ProjectMemberRepository projectMemberRepository;
+
+    private final Instant FAR_FUTURE = Instant.parse("9999-12-31T23:59:59Z");
 
     public void assign(Task task, TaskAssignmentRequest request, User assigner) {
         List<UUID> projectMemberIds = projectMemberRepository
@@ -84,13 +89,13 @@ public class TaskAssignmentService {
                 .orElseThrow(() -> new NotFoundException("User is not assigned to this task"));
     }
 
-    public TaskAssignment getTaskAssignedToAUser(UUID userId){
+    public TaskAssignment getTaskAssignedToAUser(UUID userId) {
         return null;
     }
 
-    public TaskSimpleResponses getAssignedTasks(UUID userId, Integer cursor, int limit) {
-        List<TaskSimpleResponse> responses=new ArrayList<>();
-        if (cursor == null) {
+    public TaskSimpleResponses getAssignedTasks(UUID userId, Instant lastAccessCursor, Long idCursor, int limit) {
+        List<TaskSimpleResponse> responses = new ArrayList<>();
+        if (idCursor == null) {
             List<TaskSimpleResponse> pinned = taskAssignmentRepository.findPinnedTask(userId);
             responses.addAll(pinned);
             int size = limit - responses.size();
@@ -103,22 +108,14 @@ public class TaskAssignmentService {
                                 PageRequest.of(0, size)
                         );
 
-                List<TaskSimpleResponse> tasks = tasksSlice.getContent();
-                responses.addAll(tasks);
-
-                Integer lastCursor = tasks.isEmpty() ? null : tasks.getLast().index();
-
-                return new TaskSimpleResponses(
-                        responses,
-                        lastCursor,
-                        tasksSlice.hasNext()
-                );
+                return getTaskSimpleResponses(responses, tasksSlice);
             }
 
             // No unpinned fetched (pinned equal limit)
             return new TaskSimpleResponses(
                     responses,
-                    Integer.MAX_VALUE,
+                    FAR_FUTURE,
+                    0L,
                     true
             );
         }
@@ -129,30 +126,53 @@ public class TaskAssignmentService {
         Slice<TaskSimpleResponse> tasksSlice =
                 taskAssignmentRepository.findUnpinnedTaskWithCursor(
                         userId,
-                        cursor,
+                        lastAccessCursor,
+                        idCursor,
                         PageRequest.of(0, pageSize)
                 );
 
+        return getTaskSimpleResponses(responses, tasksSlice);
+    }
+
+    @NonNull
+    private TaskSimpleResponses getTaskSimpleResponses(List<TaskSimpleResponse> responses, Slice<TaskSimpleResponse> tasksSlice) {
         List<TaskSimpleResponse> tasks = tasksSlice.getContent();
         responses.addAll(tasks);
 
-        Integer lastCursor = tasks.isEmpty() ? null : tasks.getLast().index();
+        TaskSimpleResponse lastTask = tasks.isEmpty()?null:tasks.getLast();
+
+        Instant lastAccess = Optional.ofNullable(lastTask)
+                .map(TaskSimpleResponse::lastAccess)
+                .orElse(FAR_FUTURE);
+
+        Long lastId = Optional.ofNullable(lastTask)
+                .map(TaskSimpleResponse::id)
+                .orElse(0L);
 
         return new TaskSimpleResponses(
                 responses,
-                lastCursor,
+                lastAccess,
+                lastId,
                 tasksSlice.hasNext()
-        );}
+        );
+    }
 
-    public void updateTaskIndex(Long taskId, UUID userId, int index) {
-        TaskAssignment taskAssignment= checkAssigner(userId, taskId);
-        taskAssignment.setTaskIndex(index);
+    public void updateTaskPinStatus(Long taskId, UUID userId) {
+        TaskAssignment taskAssignment = checkAssigner(userId,taskId);
+        if (!taskAssignment.isPinned()) {
+            long taskAssignments = taskAssignmentRepository.countByUser_IdAndIsPinnedTrue(userId);
+
+            if (taskAssignments > 5) {
+                throw new BadRequestException("You can only pin 5 tasks at a time");
+            }
+        }
+        taskAssignment.setPinned(!taskAssignment.isPinned());
         taskAssignmentRepository.save(taskAssignment);
     }
 
-    public void updateTaskLastAccess(Long taskId, UUID userId, Instant lastAccess) {
-        TaskAssignment taskAssignment= checkAssigner(userId, taskId);
-        taskAssignment.setLastAccess(lastAccess);
+    public void updateTaskLastAccess(Long taskId, UUID userId) {
+        TaskAssignment taskAssignment = checkAssigner(userId, taskId);
+        taskAssignment.setLastAccess(Instant.now());
         taskAssignmentRepository.save(taskAssignment);
     }
 }

@@ -38,9 +38,10 @@ public class TaskController {
     @GetMapping("/simple")
     public TaskSimpleResponses getTasksAssignedToUser(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "cursor",required = false) Integer cursor,
+            @RequestParam(name = "lastAccessCursor",required = false) Instant lastAccessCursor,
+            @RequestParam(name = "idCursor",required = false) Long idCursor,
             @RequestParam(name = "limit",required = false) Integer limit) {
-        return appService.getAssignedTasks(authUser.getId(),cursor,limit);
+        return appService.getAssignedTasks(authUser.getId(),lastAccessCursor,idCursor,limit);
     }
 
     @GetMapping

@@ -23,7 +23,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
@@ -263,11 +262,9 @@ public class AppService {
     }
 
     @Transactional(readOnly = true)
-    public ProjectSimpleResponses getProjectsByUserId(UUID userId,Instant lastLastAccessCursor,
-                                                      Instant lastCreatedAtCursor, Integer limit) {
-        System.out.println(lastLastAccessCursor);
-        System.out.println(lastCreatedAtCursor);
-        return memberService.getProjectsByUserId(userId, lastCreatedAtCursor,lastCreatedAtCursor,
+    public ProjectSimpleResponses getProjectsByUserId(UUID userId,Instant lastAccessCursor,
+                                                      Instant createdAtCursor, Integer limit) {
+        return memberService.getProjectsByUserId(userId, lastAccessCursor,createdAtCursor,
                 limit != null && limit < 11 && limit > 0 ? limit : 5);
     }
 
@@ -333,8 +330,8 @@ public class AppService {
         memberService.updateProjectPinStatus(projectId, userId);
     }
 
-    public void updateProjectLastAccess(UUID projectId, UUID userId, Instant lastAccess) {
-        memberService.updateProjectLastAccess(projectId, userId, lastAccess);
+    public void updateProjectLastAccess(UUID projectId, UUID userId) {
+        memberService.updateProjectLastAccess(projectId, userId);
     }
 
     @Transactional
@@ -484,8 +481,9 @@ public class AppService {
     }
 
     // Task Assignment
-    public TaskSimpleResponses getAssignedTasks(UUID userId, Integer cursor,Integer limit) {
-        return taskAssignmentService.getAssignedTasks(userId, cursor, limit!=null&&limit<11&&limit>0?limit:5);
+    public TaskSimpleResponses getAssignedTasks(UUID userId, Instant lastAccessCursor,Long isCursor,Integer limit) {
+        return taskAssignmentService.getAssignedTasks(userId, lastAccessCursor,isCursor,
+                limit!=null&&limit<11&&limit>0?limit:5);
     }
 
     @Transactional
@@ -521,12 +519,12 @@ public class AppService {
 
     }
 
-    public void updateTaskIndex(Long taskId, UUID userId, int index) {
-        taskAssignmentService.updateTaskIndex(taskId, userId, index);
+    public void updateTaskPinStatus(Long taskId, UUID userId) {
+        taskAssignmentService.updateTaskPinStatus(taskId, userId);
     }
 
-    public void updateTaskLastAccess(Long taskId, UUID userId, Instant lastAccess) {
-        taskAssignmentService.updateTaskLastAccess(taskId, userId, lastAccess);
+    public void updateTaskLastAccess(Long taskId, UUID userId) {
+        taskAssignmentService.updateTaskLastAccess(taskId, userId);
     }
 
     //Comment

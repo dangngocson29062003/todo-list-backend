@@ -17,12 +17,15 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ProjectMemberService {
     private final ProjectMemberRepository repository;
+
+    private final Instant FAR_FUTURE = Instant.parse("9999-12-31T23:59:59Z");
 
     public ProjectMember addProjectMember(Project project, User user, Role role) {
         ProjectMember projectMember = ProjectMember.builder()
@@ -52,12 +55,12 @@ public class ProjectMemberService {
         return repository.findAllByProject_Id(projectId);
     }
 
-    public ProjectSimpleResponses getProjectsByUserId(UUID userId, Instant lastLastAccessCursor,
-                                                      Instant lastCreatedAtCursor, int limit) {
+    public ProjectSimpleResponses getProjectsByUserId(UUID userId, Instant lastAccessCursor,
+                                                      Instant createdAtCursor, int limit) {
         List<ProjectSimpleResponse> responses = new ArrayList<>();
 
         // FIRST LOAD
-        if (lastCreatedAtCursor == null) {
+        if (createdAtCursor == null) {
             List<ProjectSimpleResponse> pinned = repository.findPinnedProject(userId);
             responses.addAll(pinned);
             int size = limit - responses.size();
@@ -76,8 +79,8 @@ public class ProjectMemberService {
             // No unpinned fetched (pinned equal limit)
             return new ProjectSimpleResponses(
                     responses,
-                    Instant.MAX,
-                    Instant.MAX,
+                    FAR_FUTURE,
+                    FAR_FUTURE,
                     true
             );
         }
@@ -88,8 +91,8 @@ public class ProjectMemberService {
         Slice<ProjectSimpleResponse> projectsSlice =
                 repository.findUnpinnedProjectWithCursor(
                         userId,
-                        lastCreatedAtCursor,
-                        lastLastAccessCursor,
+                        lastAccessCursor,
+                        createdAtCursor,
                         PageRequest.of(0, pageSize)
                 );
 
@@ -102,9 +105,15 @@ public class ProjectMemberService {
         List<ProjectSimpleResponse> projects = projectsSlice.getContent();
         responses.addAll(projects);
 
-        ProjectSimpleResponse lastProject = projects.getLast();
-        Instant lastAccess = lastProject==null ? null : lastProject.lastAccess();
-        Instant lastCreatedAt = lastProject==null ? null : lastProject.createdAt();
+        ProjectSimpleResponse lastProject = projects.isEmpty() ? null : projects.getLast();
+
+        Instant lastAccess = Optional.ofNullable(lastProject)
+                .map(ProjectSimpleResponse::lastAccess)
+                .orElse(FAR_FUTURE);
+
+        Instant lastCreatedAt = Optional.ofNullable(lastProject)
+                .map(ProjectSimpleResponse::createdAt)
+                .orElse(FAR_FUTURE);
 
         return new ProjectSimpleResponses(
                 responses,
@@ -143,19 +152,20 @@ public class ProjectMemberService {
 
     public void updateProjectPinStatus(UUID projectId, UUID userId) {
         ProjectMember projectMember = getProjectMember(projectId, userId);
-        if(!projectMember.getIsPinned()){
-            List<ProjectMember> projectMembers = repository.findAllByUser_IdAndIsPinnedTrue(userId);
+        if (!projectMember.isPinned()) {
+            long projectMembers = repository.countByUser_IdAndIsPinnedTrue(userId);
 
-            if(projectMembers.size() > 5) {
+            if (projectMembers > 5) {
                 throw new BadRequestException("You can only pin 5 projects at a time");
             }
         }
-       projectMember.setIsPinned(!projectMember.getIsPinned());
+        projectMember.setPinned(!projectMember.isPinned());
+        repository.save(projectMember);
     }
 
-    public void updateProjectLastAccess(UUID projectId, UUID userId, Instant lastAccess) {
+    public void updateProjectLastAccess(UUID projectId, UUID userId) {
         ProjectMember projectMember = getProjectMember(projectId, userId);
-        projectMember.setLastAccess(lastAccess);
+        projectMember.setLastAccess(Instant.now());
         repository.save(projectMember);
     }
 

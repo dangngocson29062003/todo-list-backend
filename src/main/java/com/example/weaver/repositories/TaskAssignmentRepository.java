@@ -26,7 +26,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
                     ts.task.id,
                     ts.task.name,
                     ts.task.status,
-                    ts.taskIndex,
+                    ts.lastAccess,
                     ts.isPinned
                 )
         FROM TaskAssignment ts
@@ -35,7 +35,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
         WHERE ts.user.id=:userId
                 AND ts.isPinned=TRUE
                 AND ts.task.parent IS NULL
-        ORDER BY ts.taskIndex ASC
+        ORDER BY ts.lastAccess NULLS FIRST
 """)
     List<TaskSimpleResponse> findPinnedTask(UUID userId);
 
@@ -44,7 +44,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
                     ts.task.id,
                     ts.task.name,
                     ts.task.status,
-                    ts.taskIndex,
+                    ts.lastAccess,
                     ts.isPinned
                 )
         FROM TaskAssignment ts
@@ -53,7 +53,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
         WHERE ts.user.id=:userId
                 AND (ts.isPinned IS NULL OR ts.isPinned = FALSE)
                 AND ts.task.parent IS NULL
-        ORDER BY ts.taskIndex ASC
+        ORDER BY ts.lastAccess NULLS FIRST
 """)
     Slice<TaskSimpleResponse> findUnpinnedTask(UUID userId, Pageable pageable);
 
@@ -62,17 +62,32 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
                                 ts.task.id,
                                 ts.task.name,
                                 ts.task.status,
-                                ts.taskIndex,
+                                ts.lastAccess,
                                 ts.isPinned
-                            )
+                              )
                     FROM TaskAssignment ts
                     LEFT JOIN tasks t
                     ON ts.task.id=t.id
                     WHERE ts.user.id=:userId
-                            AND (ts.isPinned IS NULL OR ts.isPinned = FALSE)
-                            AND (:cursor IS NULL OR ts.taskIndex<:cursor)
                             AND ts.task.parent IS NULL
-                    ORDER BY ts.taskIndex ASC
+                            AND ( ts.isPinned IS NULL OR ts.isPinned = FALSE)
+                            AND (
+                                (ts.lastAccess IS NOT NULL
+                                  AND (
+                                      ts.lastAccess < :lastAccessCursor
+                                      OR (ts.lastAccess = :lastAccessCursor AND ts.id > :idCursor)
+                                      )
+                                )
+                               OR (
+                                   ts.lastAccess IS NULL
+                                   AND ts.id > :idCursor
+                                  )
+                             )
+                    ORDER BY ts.lastAccess DESC NULLS FIRST
             """)
-    Slice<TaskSimpleResponse> findUnpinnedTaskWithCursor(UUID userId,Integer cursor,Pageable pageable);
+    Slice<TaskSimpleResponse> findUnpinnedTaskWithCursor(UUID userId,
+                                                         Instant lastAccessCursor,
+                                                         Long idCursor,Pageable pageable);
+
+    long countByUser_IdAndIsPinnedTrue(UUID userId);
 }

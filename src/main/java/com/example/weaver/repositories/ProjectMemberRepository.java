@@ -83,7 +83,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
                            )
                            OR (
                                pm.lastAccess IS NULL
-                               AND :lastAccess IS NOT NULL
+                               AND pm.createdAt<:lastCreatedAt
                               )
                          )
                 ORDER BY
@@ -104,8 +104,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     })
     List<ProjectMember> findWithUsersByProject_Id(UUID projectId);
 
-    List<ProjectMember> findAllByUser_IdAndIsPinnedTrue(UUID userId);
 
-    long countByProject_IdAndUser_Id(UUID projectId, UUID userId);
+    long countByUser_IdAndIsPinnedTrue(UUID userId);
 
 }
