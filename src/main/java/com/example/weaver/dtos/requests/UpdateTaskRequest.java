@@ -3,13 +3,12 @@ package com.example.weaver.dtos.requests;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.Instant;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateTaskRequest {

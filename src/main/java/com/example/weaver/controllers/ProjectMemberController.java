@@ -27,6 +27,8 @@ public class ProjectMemberController {
         return appService.getProjectMembers(projectId, authUser.getId());
     }
 
+
+
     @PostMapping("/{userId}")
     public ProjectMemberResponse addProjectMember(@AuthenticationPrincipal AuthUser authUser,
                                                   @PathVariable UUID projectId,

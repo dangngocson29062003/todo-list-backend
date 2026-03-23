@@ -1,13 +1,15 @@
 package com.example.weaver.models;
 
+import com.example.weaver.enums.Priority;
+import com.example.weaver.enums.Stage;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -16,7 +18,8 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity(name = "projects")
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -31,26 +34,45 @@ public class Project {
 
     @Column(nullable = false)
     private String name;
+    @Column
     private String description;
 
     @Column(name = "avatar_url")
     private String avatarUrl;
 
     private Instant finishedAt;
+    @Column
+    private String tags;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Stage stage;
+    @Column
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
 
-    @Column(columnDefinition = "json")
-    private List<String> links;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP(6) DEFAULT NOW()")
+    private Instant startDate;
+    @Column(nullable = false, columnDefinition = "TIMESTAMP(6) DEFAULT NOW()")
+    private Instant endDate;
 
-    @Column(columnDefinition = "json")
-    private List<String> tags;
+    @Column(columnDefinition = "text[]")
+    private List<String> goals;
 
-    @OneToMany(mappedBy = "project")
-    private Set<ProjectMember> members=new HashSet<>();
+    @Column(columnDefinition = "text[]")
+    private List<String> techStack;
 
-    @OneToMany(mappedBy = "project")
+    @Column
+    private String githubUrl;
+    @Column
+    private String figmaUrl;
+
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    private Set<ProjectMember> members;
+
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private Set<Task> tasks;
 
-    @OneToMany(mappedBy = "project")
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<Message> messages;
 

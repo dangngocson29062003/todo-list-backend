@@ -19,7 +19,7 @@ public class Attachment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column
+    @Column 
     private String fileName;
 
     @Column

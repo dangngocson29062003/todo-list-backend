@@ -1,7 +1,8 @@
 package com.example.weaver.controllers;
 
 import com.example.weaver.dtos.others.AuthUser;
-import com.example.weaver.dtos.requests.ProjectRequest;
+import com.example.weaver.dtos.requests.CreateProjectRequest;
+import com.example.weaver.dtos.requests.UpdateProjectRequest;
 import com.example.weaver.dtos.responses.ProjectDetailResponse;
 import com.example.weaver.dtos.responses.ProjectSimpleResponse;
 import com.example.weaver.dtos.responses.ProjectSimpleResponses;
@@ -37,20 +38,19 @@ public class ProjectController {
     }
 
     @PostMapping
-    public ProjectDetailResponse createProject(@Valid @RequestBody ProjectRequest request,
+    public ProjectDetailResponse createProject(@Valid @RequestBody CreateProjectRequest request,
                                                @AuthenticationPrincipal AuthUser authUser) {
         return appService.createProject(authUser.getId(),
                 request.getName().trim(),
                 request.getDescription()!=null? request.getDescription().trim():null,
-                request.getFinishedAt()!=null? request.getFinishedAt():null);
+                request.getEndDate()!=null? request.getEndDate():null);
     }
 
     @PutMapping("/{id}")
     public ProjectDetailResponse updateProject(@PathVariable UUID id,
-                                               @Valid @RequestBody ProjectRequest request,
+                                               @Valid @RequestBody UpdateProjectRequest request,
                                                @AuthenticationPrincipal AuthUser authUser) {
-        return appService.updateProject(id,authUser.getId(),
-                request.getName().trim(), request.getDescription().trim(), request.getFinishedAt());
+        return appService.updateProject(id,request,authUser.getId());
     }
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable UUID id,

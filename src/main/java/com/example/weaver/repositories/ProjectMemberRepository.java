@@ -1,5 +1,7 @@
 package com.example.weaver.repositories;
 
+import com.example.weaver.enums.Role;
+import com.example.weaver.models.Project;
 import com.example.weaver.dtos.responses.ProjectSimpleResponse;
 import com.example.weaver.models.ProjectMember;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     List<ProjectMember> findAllByProject_Id(UUID projectId);
 
+    List<ProjectMember> findByUser_Id(UUID userId);
     @Query("""
                 SELECT new com.example.weaver.dtos.responses.ProjectSimpleResponse(
                     pm.project.id,
@@ -98,6 +101,10 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
     );
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
+
+    @Query("SELECT pm.role FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id = :userId")
+    Optional<Role> findRoleByProjectIdAndUserId(UUID projectId, UUID userId);
+
 
     @EntityGraph(attributePaths = {
             "user"

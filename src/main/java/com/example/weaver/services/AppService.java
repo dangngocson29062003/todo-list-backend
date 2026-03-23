@@ -5,10 +5,7 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.others.results.EmailVerificationResult;
 import com.example.weaver.dtos.others.results.LocationResult;
 import com.example.weaver.dtos.others.results.TokenResult;
-import com.example.weaver.dtos.requests.CommentRequest;
-import com.example.weaver.dtos.requests.CreateTaskRequest;
-import com.example.weaver.dtos.requests.TaskAssignmentRequest;
-import com.example.weaver.dtos.requests.UpdateTaskRequest;
+import com.example.weaver.dtos.requests.*;
 import com.example.weaver.dtos.responses.*;
 import com.example.weaver.enums.*;
 import com.example.weaver.exceptions.BadRequestException;
@@ -257,8 +254,7 @@ public class AppService {
             throw new ForbiddenException("You are not allowed to view this project");
         }
         Project project = projectService.getWithCreatedByAndMembersData(projectId);
-        List<Task> tasks = taskService.getTasks(projectId, null, null, null);
-        return ProjectDetailResponse.toResponse(project, tasks);
+        return ProjectDetailResponse.toResponse(project);
     }
 
     @Transactional(readOnly = true)
@@ -278,17 +274,17 @@ public class AppService {
 
         //Re fetch cause member hasn't added to project yet
         Project returnedProject = projectService.findById(project.getId());
-        return ProjectDetailResponse.toResponse(returnedProject, null);
+        return ProjectDetailResponse.toResponse(returnedProject);
     }
 
     @Transactional
-    public ProjectDetailResponse updateProject(UUID projectId, UUID requesterId, String name, String description, Instant finishedAt) {
-        ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(projectId, requesterId);
+    public ProjectDetailResponse updateProject(UUID projectId, UpdateProjectRequest request, UUID userId) {
+        ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(projectId, userId);
         if (!requester.getRole().equals(Role.MANAGER)) {
             throw new ForbiddenException("You are not allowed to update this projectResponse");
         }
-        Project project = projectService.update(requester.getProject(), name, description, finishedAt);
-        return ProjectDetailResponse.toResponse(project, null);
+        Project project = projectService.updateProject(projectId,request,userId);
+        return ProjectDetailResponse.toResponse(project);
     }
 
     @Transactional
@@ -297,7 +293,7 @@ public class AppService {
         if (!requesterId.equals(project.getCreatedBy().getId())) {
             throw new ForbiddenException("You are not allowed to delete this projectResponse");
         }
-        projectService.delete(project);
+        projectService.deleteProject(project.getId());
     }
 
     //PROJECT_MEMBER
