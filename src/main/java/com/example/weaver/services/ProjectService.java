@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -76,8 +77,8 @@ public class ProjectService {
         if (request.getStage() != null) project.setStage(request.getStage());
         if (request.getPriority() != null) project.setPriority(request.getPriority());
 
-        Instant newStart = request.getStartDate() != null ? request.getStartDate() : project.getStartDate();
-        Instant newEnd = request.getEndDate() != null ? request.getEndDate() : project.getEndDate();
+        LocalDate newStart = request.getStartDate() != null ? request.getStartDate() : project.getStartDate();
+        LocalDate newEnd = request.getEndDate() != null ? request.getEndDate() : project.getEndDate();
 
         if (newStart != null && newEnd != null && newEnd.isBefore(newStart)) {
             throw new BadRequestException("End date cannot be before start date");
@@ -85,7 +86,6 @@ public class ProjectService {
 
         project.setStartDate(newStart);
         project.setEndDate(newEnd);
-
         return projectRepository.save(project);
     }
     public void deleteProject(UUID projectId) {

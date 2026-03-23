@@ -1,5 +1,6 @@
 package com.example.weaver.repositories;
 
+import com.example.weaver.dtos.responses.StatsResponse;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
@@ -30,4 +31,17 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             Priority priority,
             TaskType type
     );
+    @Query("""
+    SELECT new com.example.weaver.dtos.responses.StatsResponse(
+        COUNT(DISTINCT t.id),
+        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.TODO THEN 1 ELSE 0 END),
+        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.IN_PROGRESS THEN 1 ELSE 0 END),
+        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.REVIEW THEN 1 ELSE 0 END),
+        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.DONE THEN 1 ELSE 0 END),
+        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.IGNORE THEN 1 ELSE 0 END)
+    )
+    FROM tasks t
+    WHERE t.project.id = :projectId
+""")
+    StatsResponse getTaskStats(UUID projectId);
 }

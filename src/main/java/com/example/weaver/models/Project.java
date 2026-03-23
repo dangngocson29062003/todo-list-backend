@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,9 +52,9 @@ public class Project {
     private Priority priority;
 
     @Column(nullable = false, columnDefinition = "TIMESTAMP(6) DEFAULT NOW()")
-    private Instant startDate;
+    private LocalDate startDate;
     @Column(nullable = false, columnDefinition = "TIMESTAMP(6) DEFAULT NOW()")
-    private Instant endDate;
+    private LocalDate endDate;
 
     @Column(columnDefinition = "text[]")
     private List<String> goals;

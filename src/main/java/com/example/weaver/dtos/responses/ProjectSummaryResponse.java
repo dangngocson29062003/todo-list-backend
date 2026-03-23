@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,8 +19,8 @@ public record ProjectSummaryResponse(
         Priority priority,
         String tags,
         List<String> techStack,
-        Instant startDate,
-        Instant endDate,
+        LocalDate startDate,
+        LocalDate endDate,
         long memberCount,
         long taskCount,
         long doneTaskCount,
@@ -27,7 +28,7 @@ public record ProjectSummaryResponse(
 ) {
     public ProjectSummaryResponse(
             UUID id, String name, String description, Stage stage, Priority priority, String tags, List<String> techStack,
-            Instant startDate, Instant endDate,
+            LocalDate startDate, LocalDate endDate,
             long memberCount, long taskCount, long doneTaskCount,
             UUID userId, String email, String fullName, String avatarUrl
     ) {

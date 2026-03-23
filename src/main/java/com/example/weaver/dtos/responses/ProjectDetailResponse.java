@@ -5,6 +5,7 @@ import com.example.weaver.enums.Stage;
 import com.example.weaver.models.Project;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -26,16 +27,17 @@ public record ProjectDetailResponse(
         String githubUrl,
         String figmaUrl,
 
-        Instant startDate,
-        Instant endDate,
+        LocalDate startDate,
+        LocalDate endDate,
         Instant createdAt,
         Instant updatedAt,
 
         UserResponse createdBy,
-        List<ProjectMemberResponse> members
+        List<ProjectMemberResponse> members,
+        StatsResponse stats
 ) {
 
-    public static ProjectDetailResponse toResponse(Project p) {
+    public static ProjectDetailResponse toResponse(Project p,  StatsResponse stats) {
         return new ProjectDetailResponse(
                 p.getId(),
                 p.getName(),
@@ -52,7 +54,8 @@ public record ProjectDetailResponse(
                 p.getCreatedAt(),
                 p.getUpdatedAt(),
                 UserResponse.toResponse(p.getCreatedBy()),
-                p.getMembers() != null ? p.getMembers().stream().map(ProjectMemberResponse::toResponse).toList() : new ArrayList<>()
+                p.getMembers() != null ? p.getMembers().stream().map(ProjectMemberResponse::toResponse).toList() : new ArrayList<>(),
+                stats
         );
     }
 }

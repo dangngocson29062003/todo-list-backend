@@ -2,6 +2,7 @@ package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.UpdateTaskRequest;
+import com.example.weaver.dtos.responses.StatsResponse;
 import com.example.weaver.dtos.responses.TaskResponse;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.Role;
@@ -111,5 +112,7 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
-
+    public StatsResponse getStats(UUID projectId) {
+        return taskRepository.getTaskStats(projectId);
+    }
 }

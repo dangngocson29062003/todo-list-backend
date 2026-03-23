@@ -260,21 +260,22 @@ public class AppService {
     @Transactional(readOnly = true)
     public ProjectSimpleResponses getProjectsByUserId(UUID userId,Instant lastAccessCursor,
                                                       Instant createdAtCursor, Integer limit) {
-        return memberService.getProjectsByUserId(userId, lastAccessCursor,createdAtCursor,
+        return memberService.getProjectsByUserId(userId, lastAccessCursor, createdAtCursor,
                 limit != null && limit < 11 && limit > 0 ? limit : 5);
+    }
+    public ProjectDetailResponse getProject(UUID userId, UUID projectId) {
+        Project project = projectService.getProject(projectId, userId);
+        StatsResponse stats = taskService.getStats(projectId);
+        return ProjectDetailResponse.toResponse(project, stats);
     }
 
     @Transactional
-    public ProjectDetailResponse createProject(UUID createdBy, String name, String description, Instant finishedAt) {
-        if (name == null || name.length() < 3)
-            throw new BadRequestException("Please enter a name of at least 3 characters");
-        User user = userService.findById(createdBy);
-        Project project = projectService.create(user, name, description, finishedAt);
-        memberService.addProjectMember(project, user, Role.MANAGER);
-
-        //Re fetch cause member hasn't added to project yet
-        Project returnedProject = projectService.findById(project.getId());
-        return ProjectDetailResponse.toResponse(returnedProject);
+    public ProjectDetailResponse createProject(CreateProjectRequest request, UUID createdBy) {
+        User creator = userService.findById(createdBy);
+        Project project = projectService.createProject(request, creator);
+        ProjectMember manager = projectMemberService.addProjectMember(project, creator, Role.MANAGER);
+        project.getMembers().add(manager);
+        return ProjectDetailResponse.toResponse(project, null);
     }
 
     @Transactional
