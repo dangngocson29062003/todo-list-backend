@@ -16,7 +16,7 @@ public record ProjectSimpleResponse(UUID id,
         return new ProjectSimpleResponse(
                 p.getId(),
                 p.getName(),
-                "s",
+                p.getAvatarUrl(),
                 false,
                 null,
                 null

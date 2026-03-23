@@ -3,7 +3,10 @@ package com.example.weaver.controllers;
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.CreateTaskRequest;
 import com.example.weaver.dtos.requests.UpdateTaskRequest;
+import com.example.weaver.dtos.responses.ProjectSimpleResponse;
 import com.example.weaver.dtos.responses.TaskResponse;
+import com.example.weaver.dtos.responses.TaskSimpleResponse;
+import com.example.weaver.dtos.responses.TaskSimpleResponses;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.TaskStatus;
 import com.example.weaver.enums.TaskType;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +33,15 @@ public class TaskController {
     @GetMapping("/{id}")
     public TaskResponse getTask(@PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
         return appService.getTask(id, authUser.getId());
+    }
+
+    @GetMapping("/simple")
+    public TaskSimpleResponses getTasksAssignedToUser(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(name = "lastAccessCursor",required = false) Instant lastAccessCursor,
+            @RequestParam(name = "idCursor",required = false) Long idCursor,
+            @RequestParam(name = "limit",required = false) Integer limit) {
+        return appService.getAssignedTasks(authUser.getId(),lastAccessCursor,idCursor,limit);
     }
 
     @GetMapping

@@ -17,13 +17,14 @@ import java.util.UUID;
 public class MainController {
     private final AppService appService;
 
-//    @GetMapping("/home")
-//    public HomeResponse getHomeData(
-//            @AuthenticationPrincipal AuthUser authUser,
-//            @RequestParam(required = false) Integer limit) {
-//        ProjectSimpleResponses projectsData=
-//                appService.getProjectsByUserId(authUser.getId(),null,null,limit);
-//        TaskSimpleResponses tasksData =appService.getAssignedTasks(authUser.getId(),null,limit);
-//        return new HomeResponse(projectsData, tasksData);
-//    }
+    @GetMapping("/home")
+    public HomeResponse getHomeData(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam(required = false) Integer limit) {
+        ProjectSimpleResponses projectsData=
+                appService.getProjectsByUserId(authUser.getId(),null,null,limit);
+        TaskSimpleResponses tasksData =
+                appService.getAssignedTasks(authUser.getId(),null,null,limit);
+        return new HomeResponse(projectsData, tasksData);
+    }
 }

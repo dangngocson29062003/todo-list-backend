@@ -2,6 +2,7 @@ package com.example.weaver.repositories;
 
 import com.example.weaver.dtos.responses.ProjectSummaryResponse;
 import com.example.weaver.models.Project;
+import org.springframework.data.jpa.repository.EntityGraph;
 import com.example.weaver.models.ProjectMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -9,10 +10,18 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
+    @EntityGraph(attributePaths = {
+            "createdBy",
+            "members",
+            "members.user"
+    })
+    @Query("SELECT p FROM projects p WHERE p.id = :id")
+    Optional<Project> getWithCreatedByAndMembersData(UUID id);
     @Query("""
                 SELECT new com.example.weaver.dtos.responses.ProjectSummaryResponse(
                     p.id,

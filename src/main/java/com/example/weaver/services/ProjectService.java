@@ -52,7 +52,15 @@ public class ProjectService {
         project.setStartDate(request.getStartDate());
         project.setEndDate(request.getEndDate());
         project.setCreatedBy(creator);
-
+        return projectRepository.save(project);
+    }
+    public Project create(User user, String name,String description, Instant finishedAt) {
+        Project project=Project.builder()
+                .createdBy(user)
+                .name(name)
+                .description(description)
+                .finishedAt(finishedAt)
+                .build();
         return projectRepository.save(project);
     }
     public Project updateProject(UUID projectId, UpdateProjectRequest request, UUID userId) {
@@ -87,5 +95,14 @@ public class ProjectService {
 
     public boolean existsById(UUID id) {
         return projectRepository.existsById(id);
+    }
+    public Project findById(UUID id) {
+        return projectRepository.findById(id)
+                .orElseThrow(()-> new NotFoundException("Project not found"));
+    }
+
+    public Project getWithCreatedByAndMembersData(UUID projectId) {
+        return projectRepository.getWithCreatedByAndMembersData(projectId)
+                .orElseThrow(()-> new NotFoundException("Project not found"));
     }
 }

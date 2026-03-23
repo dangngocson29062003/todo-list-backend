@@ -37,6 +37,10 @@ public class Project {
     @Column
     private String description;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    private Instant finishedAt;
     @Column
     private String tags;
     @Column

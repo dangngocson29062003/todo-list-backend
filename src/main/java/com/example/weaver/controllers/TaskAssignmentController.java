@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,5 +34,15 @@ public class TaskAssignmentController {
                                  @PathVariable UUID userId,
                                  @AuthenticationPrincipal AuthUser authUser){
         appService.unassignTask(id, userId, authUser.getId());
+    }
+    @PostMapping("/{userId}/pin")
+    public void updateTaskIndex(@PathVariable Long id,
+                                   @PathVariable UUID userId){
+        appService.updateTaskPinStatus(id,userId);
+    }
+    @PostMapping("/{userId}/last-access")
+    public void updateTaskLastAccess(@PathVariable Long id,
+                                        @PathVariable UUID userId){
+        appService.updateTaskLastAccess(id,userId);
     }
 }
