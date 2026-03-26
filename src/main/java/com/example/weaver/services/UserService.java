@@ -9,6 +9,7 @@ import com.example.weaver.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,8 +47,14 @@ public class UserService {
     public Optional<User> findByEmail(String email){
         return userRepository.findByEmail(email);
     }
+    public List<User> searchUsers(String query, UUID userId){
+        return userRepository.searchUsersExcludingSelf(userId, query);
+    }
 
     public User findById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(()->new NotFoundException("User not found"));
+    }
+    public List<User> findAllByIds(List<UUID> userIds) {
+        return userRepository.findAllById(userIds);
     }
 }

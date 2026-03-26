@@ -21,19 +21,19 @@ import java.util.UUID;
 public class ProjectMemberController {
     private final AppService appService;
 
-    @GetMapping
-    public List<ProjectMemberResponse> getProjectMembers(@AuthenticationPrincipal AuthUser authUser,
-                                                 @PathVariable UUID projectId) {
-        return appService.getProjectMembers(projectId, authUser.getId());
-    }
+//    @GetMapping
+//    public List<ProjectMemberResponse> getProjectMembers(@AuthenticationPrincipal AuthUser authUser,
+//                                                 @PathVariable UUID projectId) {
+//        return appService.getProjectMembers(projectId, authUser.getId());
+//    }
 
 
 
-    @PostMapping("/{userId}")
+    @PostMapping("")
     public ProjectMemberResponse addProjectMember(@AuthenticationPrincipal AuthUser authUser,
                                                   @PathVariable UUID projectId,
-                                                  @PathVariable UUID userId){
-        return appService.addProjectMember(authUser.getId(),projectId,userId);
+                                                  @RequestBody ProjectMemberRequest request){
+        return appService.addProjectMember(authUser.getId(),projectId,request);
     }
     @PutMapping("/{userId}")
     public ProjectMemberResponse updateProjectMemberRole(@AuthenticationPrincipal AuthUser authUser,

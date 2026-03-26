@@ -1,7 +1,6 @@
 package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.TaskAssignmentRequest;
-import com.example.weaver.dtos.responses.ProjectSimpleResponse;
 import com.example.weaver.dtos.responses.TaskSimpleResponse;
 import com.example.weaver.dtos.responses.TaskSimpleResponses;
 import com.example.weaver.exceptions.BadRequestException;

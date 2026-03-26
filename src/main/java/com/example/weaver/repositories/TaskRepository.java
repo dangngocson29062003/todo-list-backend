@@ -33,15 +33,14 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     );
     @Query("""
     SELECT new com.example.weaver.dtos.responses.StatsResponse(
-        COUNT(DISTINCT t.id),
-        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.TODO THEN 1 ELSE 0 END),
-        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.IN_PROGRESS THEN 1 ELSE 0 END),
-        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.REVIEW THEN 1 ELSE 0 END),
-        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.DONE THEN 1 ELSE 0 END),
-        SUM(CASE WHEN t.status = com.example.weaver.enums.TaskStatus.IGNORE THEN 1 ELSE 0 END)
+        COALESCE(COUNT(t), 0),
+        COALESCE(SUM(CASE WHEN t.status = 'TODO' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN t.status = 'IN_PROGRESS' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN t.status = 'REVIEW' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN t.status = 'DONE' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN t.status = 'BLOCKED' THEN 1 ELSE 0 END), 0)
     )
-    FROM tasks t
-    WHERE t.project.id = :projectId
+    FROM tasks t WHERE t.project.id = :projectId
 """)
     StatsResponse getTaskStats(UUID projectId);
 }

@@ -14,4 +14,6 @@ import java.util.UUID;
 public class ProjectMemberRequest {
     @NotNull(message = "User Id is required")
     private UUID userId;
+    @NotNull(message = "Role is required")
+    private Role role;
 }

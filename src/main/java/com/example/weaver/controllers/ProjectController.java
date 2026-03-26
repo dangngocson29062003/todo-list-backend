@@ -4,9 +4,8 @@ import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.CreateProjectRequest;
 import com.example.weaver.dtos.requests.UpdateProjectRequest;
 import com.example.weaver.dtos.responses.ProjectDetailResponse;
-import com.example.weaver.dtos.responses.ProjectSimpleResponse;
-import com.example.weaver.dtos.responses.ProjectSimpleResponses;
-import com.example.weaver.models.Project;
+import com.example.weaver.dtos.responses.ProjectSummaryResponse;
+import com.example.weaver.dtos.responses.ProjectSummaryResponses;
 import com.example.weaver.services.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,36 +25,43 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ProjectDetailResponse getProject(@PathVariable UUID id,
                                             @AuthenticationPrincipal AuthUser authUser) {
-        return appService.getProjectDetail(id,authUser.getId());
+        return appService.getProject(authUser.getId(), id);
     }
-    @GetMapping("/simple")
-    public ProjectSimpleResponses getAllProjects(
+
+    @GetMapping("")
+    public ProjectSummaryResponses getProjects(
             @AuthenticationPrincipal AuthUser authUser,
-            @RequestParam(name = "limit",required = false)  Integer limit,
-            @RequestParam(name = "lastAccessCursor",required = false) Instant lastLastAccessCursor,
-            @RequestParam(name = "createdAtCursor",required = false) Instant lastCreatedAtCursor) {
-        return appService.getProjectsByUserId(authUser.getId(),lastLastAccessCursor,lastCreatedAtCursor,limit);
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "sortBy", required = false, defaultValue = "recent") String sortBy,
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "limit", required = false, defaultValue = "5") Integer limit
+    ) {
+        return appService.getProjects(
+                authUser.getId(),
+                name,
+                sortBy,
+                page,
+                limit
+        );
     }
 
     @PostMapping
-    public ProjectDetailResponse createProject(@Valid @RequestBody CreateProjectRequest request,
+    public ProjectSummaryResponse createProject(@Valid @RequestBody CreateProjectRequest request,
                                                @AuthenticationPrincipal AuthUser authUser) {
-        return appService.createProject(authUser.getId(),
-                request.getName().trim(),
-                request.getDescription()!=null? request.getDescription().trim():null,
-                request.getEndDate()!=null? request.getEndDate():null);
+        return appService.createProject(request, authUser.getId());
     }
 
     @PutMapping("/{id}")
     public ProjectDetailResponse updateProject(@PathVariable UUID id,
                                                @Valid @RequestBody UpdateProjectRequest request,
                                                @AuthenticationPrincipal AuthUser authUser) {
-        return appService.updateProject(id,request,authUser.getId());
+        return appService.updateProject(id, request, authUser.getId());
     }
+
     @DeleteMapping("/{id}")
     public void deleteProject(@PathVariable UUID id,
                               @AuthenticationPrincipal AuthUser authUser) {
-        appService.deleteProject(id,authUser.getId());
+        appService.deleteProject(id, authUser.getId());
     }
 
 }

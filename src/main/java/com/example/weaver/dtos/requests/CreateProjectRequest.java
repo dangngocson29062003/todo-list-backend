@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -36,9 +37,11 @@ public class CreateProjectRequest {
     private String figmaUrl;
 
     @NotNull(message = "Start date is required")
-    private Instant startDate;
+    private LocalDate startDate;
     @NotNull(message = "End date is required")
-    private Instant endDate;
+    private LocalDate endDate;
 
     private User createdBy;
+
+    private List<ProjectMemberRequest> members;
 }

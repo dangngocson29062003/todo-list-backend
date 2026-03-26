@@ -3,6 +3,7 @@ package com.example.weaver.services;
 import com.example.weaver.dtos.requests.CreateProjectRequest;
 import com.example.weaver.dtos.requests.UpdateProjectRequest;
 import com.example.weaver.dtos.responses.ProjectSummaryResponse;
+import com.example.weaver.dtos.responses.ProjectSummaryResponses;
 import com.example.weaver.enums.Priority;
 import com.example.weaver.enums.Stage;
 import com.example.weaver.exceptions.BadRequestException;
@@ -13,6 +14,10 @@ import com.example.weaver.repositories.ProjectRepository;
 import com.example.weaver.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -32,8 +37,26 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundException("Project not found"));
     }
 
-    public List<ProjectSummaryResponse> getProjects(UUID userId) {
-        return projectRepository.findAllSummariesByUserId(userId);
+    public ProjectSummaryResponses getProjects(UUID userId,
+                                               String name,
+                                               String sortBy,
+                                               int page,
+                                               int limit) {
+        int pageSize = Math.min(Math.max(limit, 1), 50);
+        Sort sort = switch (sortBy.toLowerCase()) {
+            case "alphabetical" -> Sort.by(Sort.Order.asc("p.name"));
+            case "created" -> Sort.by(Sort.Order.desc("pm.createdAt"));
+            default -> Sort.by(Sort.Order.desc("pm.lastAccess"));
+        };
+        Pageable pageable = PageRequest.of(page, pageSize, sort);
+        Slice<ProjectSummaryResponse> projectsSlice = projectRepository.findAllSummaries(
+                userId, name, pageable
+        );
+        return new ProjectSummaryResponses(
+                projectsSlice.getContent(),
+                projectsSlice.getNumber(),
+                projectsSlice.hasNext()
+        );
     }
 
     public Project createProject(CreateProjectRequest request, User creator) {
@@ -55,8 +78,9 @@ public class ProjectService {
         project.setCreatedBy(creator);
         return projectRepository.save(project);
     }
-    public Project create(User user, String name,String description, Instant finishedAt) {
-        Project project=Project.builder()
+
+    public Project create(User user, String name, String description, Instant finishedAt) {
+        Project project = Project.builder()
                 .createdBy(user)
                 .name(name)
                 .description(description)
@@ -64,6 +88,7 @@ public class ProjectService {
                 .build();
         return projectRepository.save(project);
     }
+
     public Project updateProject(UUID projectId, UpdateProjectRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -88,21 +113,22 @@ public class ProjectService {
         project.setEndDate(newEnd);
         return projectRepository.save(project);
     }
+
     public void deleteProject(UUID projectId) {
-        //use soft delete in the future
         projectRepository.deleteById(projectId);
     }
 
     public boolean existsById(UUID id) {
         return projectRepository.existsById(id);
     }
+
     public Project findById(UUID id) {
         return projectRepository.findById(id)
-                .orElseThrow(()-> new NotFoundException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
     }
 
     public Project getWithCreatedByAndMembersData(UUID projectId) {
         return projectRepository.getWithCreatedByAndMembersData(projectId)
-                .orElseThrow(()-> new NotFoundException("Project not found"));
+                .orElseThrow(() -> new NotFoundException("Project not found"));
     }
 }

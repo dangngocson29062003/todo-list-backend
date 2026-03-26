@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.function.SupplierUtils.resolve;
 
@@ -247,35 +248,54 @@ public class AppService {
         return authUser.getId();
     }
 
-    //PROJECT
-//    @Transactional(readOnly = true)
-    public ProjectDetailResponse getProjectDetail(UUID projectId, UUID requesterId) {
-        if (!memberService.memberExists(projectId, requesterId)) {
-            throw new ForbiddenException("You are not allowed to view this project");
-        }
-        Project project = projectService.getWithCreatedByAndMembersData(projectId);
-        return ProjectDetailResponse.toResponse(project);
+    public List<UserResponse> searchUsers(String query, UUID userId) {
+        return userService.searchUsers(query, userId).stream().map(UserResponse::toResponse).toList();
     }
 
-    @Transactional(readOnly = true)
-    public ProjectSimpleResponses getProjectsByUserId(UUID userId,Instant lastAccessCursor,
-                                                      Instant createdAtCursor, Integer limit) {
-        return memberService.getProjectsByUserId(userId, lastAccessCursor, createdAtCursor,
-                limit != null && limit < 11 && limit > 0 ? limit : 5);
-    }
+    //PROJECT
+
+    @Transactional
     public ProjectDetailResponse getProject(UUID userId, UUID projectId) {
         Project project = projectService.getProject(projectId, userId);
+        memberService.updateProjectLastAccess(projectId, userId);
         StatsResponse stats = taskService.getStats(projectId);
         return ProjectDetailResponse.toResponse(project, stats);
     }
 
+    @Transactional(readOnly = true)
+    public ProjectSummaryResponses getProjects(
+            UUID userId,
+            String name,
+            String sortBy,
+            Integer page,
+            Integer limit) {
+        int p = (page != null && page >= 0) ? page : 0;
+        int l = (limit != null && limit > 0) ? limit : 5;
+        String s = (sortBy != null) ? sortBy : "recent";
+
+        return projectService.getProjects(userId, name, s, p, l);
+    }
+
+
     @Transactional
-    public ProjectDetailResponse createProject(CreateProjectRequest request, UUID createdBy) {
+    public ProjectSummaryResponse createProject(CreateProjectRequest request, UUID createdBy) {
         User creator = userService.findById(createdBy);
         Project project = projectService.createProject(request, creator);
-        ProjectMember manager = projectMemberService.addProjectMember(project, creator, Role.MANAGER);
-        project.getMembers().add(manager);
-        return ProjectDetailResponse.toResponse(project, null);
+        ProjectMember manager = memberService.addProjectMember(project, creator, Role.MANAGER);
+        if(!request.getMembers().isEmpty()) {
+            List<UUID> userIds = request.getMembers()
+                    .stream()
+                    .map(ProjectMemberRequest::getUserId)
+                    .toList();
+            Map<UUID, User> userMap = userService.findAllByIds(userIds)
+                    .stream()
+                    .collect(Collectors.toMap(User::getId, u -> u));
+            for (ProjectMemberRequest member : request.getMembers()) {
+                User newUser = userMap.get(member.getUserId());
+                memberService.addProjectMember(project, newUser, member.getRole());
+            }
+        }
+        return ProjectSummaryResponse.toResponse(project, manager);
     }
 
     @Transactional
@@ -284,8 +304,8 @@ public class AppService {
         if (!requester.getRole().equals(Role.MANAGER)) {
             throw new ForbiddenException("You are not allowed to update this projectResponse");
         }
-        Project project = projectService.updateProject(projectId,request,userId);
-        return ProjectDetailResponse.toResponse(project);
+        Project project = projectService.updateProject(projectId, request, userId);
+        return ProjectDetailResponse.toResponse(project, null);
     }
 
     @Transactional
@@ -299,26 +319,30 @@ public class AppService {
 
     //PROJECT_MEMBER
     @Transactional
-    public ProjectMemberResponse addProjectMember(UUID requesterId, UUID projectId, UUID newMemberId) {
-        if (requesterId.equals(projectId)) {
+    public ProjectMemberResponse addProjectMember(UUID requesterId, UUID projectId, ProjectMemberRequest request) {
+        if (requesterId.equals(request.getUserId())) {
             throw new ForbiddenException("You can't add yourself");
         }
         ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(projectId, requesterId);
-        if (!requester.getRole().equals(Role.MANAGER)) {
-            throw new ForbiddenException("You are not allowed to add new member to this projectDetailResponse");
+        if (requester.getRole() != Role.MANAGER) {
+            throw new ForbiddenException("Only managers can invite new members");
         }
-        User user = userService.findById(newMemberId);
-        ProjectMember newProjectMember = memberService.addProjectMember(requester.getProject(), user, Role.VIEWER);
+        User newUser = userService.findById(request.getUserId());
+        ProjectMember newProjectMember = memberService.addProjectMember(
+                requester.getProject(),
+                newUser,
+                request.getRole()
+        );
 
-        ProjectSimpleResponse projectSimpleResponse = ProjectSimpleResponse.toResponse(requester.getProject());
-        MemberEvent event = new MemberEvent(
-                newMemberId,
-                NotificationCode.MEMBER_ADDED,
-                projectSimpleResponse,
-                NotificationCategory.ANNOUNCEMENT,
-                Priority.NORMAL,
-                NotificationType.ANNOUNCEMENT);
-        outboxEventService.create(OutboxEventTopic.MEMBER_ADDED, event);
+//        ProjectSummaryResponse projectSimpleResponse = ProjectSummaryResponse.toResponse(requester.getProject(), newProjectMember);
+//        MemberEvent event = new MemberEvent(
+//                request.getUserId(),
+//                NotificationCode.MEMBER_ADDED,
+//                projectSimpleResponse,
+//                NotificationCategory.ANNOUNCEMENT,
+//                Priority.NORMAL,
+//                NotificationType.ANNOUNCEMENT);
+//        outboxEventService.create(OutboxEventTopic.MEMBER_ADDED, event);
 
         return ProjectMemberResponse.toResponse(newProjectMember);
     }
@@ -367,17 +391,6 @@ public class AppService {
         memberService.removeProjectMember(projectId, memberId);
     }
 
-    public List<ProjectMemberResponse> getProjectMembers(UUID projectId, UUID requesterId) {
-        if (!memberService.memberExists(projectId, requesterId)) {
-            throw new ForbiddenException("You do not belong to this projectResponse");
-        }
-        List<ProjectMember> projectMembers = memberService.getProjectMembers(projectId);
-        List<ProjectMemberResponse> projectMemberResponses = new ArrayList<>();
-        for (ProjectMember projectMember : projectMembers) {
-            projectMemberResponses.add(ProjectMemberResponse.toResponse(projectMember));
-        }
-        return projectMemberResponses;
-    }
 
     //NOTIFICATION
     //USER_NOTIFICATION
@@ -478,9 +491,9 @@ public class AppService {
     }
 
     // Task Assignment
-    public TaskSimpleResponses getAssignedTasks(UUID userId, Instant lastAccessCursor,Long isCursor,Integer limit) {
-        return taskAssignmentService.getAssignedTasks(userId, lastAccessCursor,isCursor,
-                limit!=null&&limit<11&&limit>0?limit:5);
+    public TaskSimpleResponses getAssignedTasks(UUID userId, Instant lastAccessCursor, Long isCursor, Integer limit) {
+        return taskAssignmentService.getAssignedTasks(userId, lastAccessCursor, isCursor,
+                limit != null && limit < 11 && limit > 0 ? limit : 5);
     }
 
     @Transactional

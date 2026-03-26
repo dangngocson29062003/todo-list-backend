@@ -1,12 +1,12 @@
 package com.example.weaver.models;
 
+import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.enums.Role;
 import jakarta.persistence.*;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -54,14 +54,19 @@ public class ProjectMember {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "is_pinned")
-    private boolean isPinned = false;
+    @Column(name = "is_pinned", columnDefinition = "boolean DEFAULT false")
+    private boolean isPinned;
 
     @Column(name = "last_access")
+    @CreationTimestamp
     private Instant lastAccess;
 
-    @Column(name = "is_favorited")
+    @Column(name = "is_favorited", columnDefinition = "boolean DEFAULT false")
     private boolean isFavorited;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private MemberStatus status;
 
     @CreationTimestamp
     private Instant createdAt;

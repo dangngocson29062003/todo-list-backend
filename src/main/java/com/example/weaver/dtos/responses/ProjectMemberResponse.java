@@ -1,5 +1,6 @@
 package com.example.weaver.dtos.responses;
 
+import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.enums.Role;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
@@ -17,6 +18,7 @@ public record ProjectMemberResponse(
         UUID projectId,
         String name,
         Role role,
+        MemberStatus status,
         Instant createdAt
 ) {
 
@@ -28,9 +30,10 @@ public record ProjectMemberResponse(
                 p.getUser() != null ? p.getUser().getNickname() : null,
                 p.getUser() != null ? p.getUser().getFullName() : null,
                 p.getUser() != null ? p.getUser().getAvatarUrl() : null,
-                p.getProject()!=null?p.getProject().getId() : null,
+                p.getProject() != null ? p.getProject().getId() : null,
                 p.getName(),
                 p.getRole(),
+                p.getStatus(),
                 p.getCreatedAt()
         );
     }

@@ -92,7 +92,10 @@ public class UserController {
                             @CookieValue(value = "refreshToken",required = false) String refreshToken) {
         appService.forceLogoutOtherSessions(authUser.getId(),refreshToken);
     }
-
+    @GetMapping("/search")
+    public List<UserResponse> searchUserByEmail(@RequestParam String query, @AuthenticationPrincipal AuthUser authUser) {
+        return appService.searchUsers(query, authUser.getId());
+    }
 }
 
 
