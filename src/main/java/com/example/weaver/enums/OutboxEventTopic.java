@@ -4,6 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum OutboxEventTopic {
+    USER_REGISTERED("user.registered"),
+    EMAIL_VERIFICATION_EXPIRED("email.verification.expired"),
     MEMBER_ADDED("member.added"),
     MEMBER_UPDATED("member.updated"),
     MEMBER_REMOVED("member.removed"),
