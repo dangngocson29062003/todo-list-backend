@@ -62,7 +62,6 @@ public class AppService {
     private final EntityManager entityManager;
     private final IpLocationService ipLocationService;
     private final ObjectMapper objectMapper;
-    private final KafkaEventProducer kafkaEventProducer;
 
 
     //USER
@@ -76,9 +75,10 @@ public class AppService {
         User user = optionalUser.get();
         if (user.getStatus() != UserStatus.ACTIVE) {
             if (user.getStatus() == UserStatus.PENDING) {
-                if (emailService.checkIfTokenExpiredByEmail(email))
-                    eventPublisher.publishEvent
-                            (new EmailVerificationExpiredEvent(user.getId(), email));
+                if (emailService.checkIfTokenExpiredByEmail(email)) {
+                    EmailVerificationExpiredEvent event =new EmailVerificationExpiredEvent(user.getId(), email);
+                    outboxEventService.create(OutboxEventTopic.NOTIFICATION_CREATED, event);
+                }
 
                 throw new ForbiddenException("Please check your email for confirmation");
             } else {
@@ -105,10 +105,8 @@ public class AppService {
     public void register(String email, String password) {
         String hashedPassword = passwordEncoder.encode(password);
         User user = userService.create(email, hashedPassword);
-
-        eventPublisher.publishEvent
-                (new UserRegisteredEvent(user.getId(), email));
-//        emailService.sendVerificationEmail(user);
+        UserRegisteredEvent event = new UserRegisteredEvent(user.getId(), email);
+        outboxEventService.create(OutboxEventTopic.USER_REGISTERED, event);
     }
 
     public UserResponse getMe(UUID userId) {
@@ -250,6 +248,11 @@ public class AppService {
 
     public List<UserResponse> searchUsers(String query, UUID userId) {
         return userService.searchUsers(query, userId).stream().map(UserResponse::toResponse).toList();
+    }
+
+    //EMAIL
+    public void sendVerificationEmail(UUID uuid, String email) {
+        emailService.sendVerificationEmail(uuid, email);
     }
 
     //PROJECT
@@ -649,5 +652,6 @@ public class AppService {
         Duration duration = Duration.between(Instant.now(), expiryDate);
         return duration.isNegative() ? Duration.ZERO : duration;
     }
+
 
 }
