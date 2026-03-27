@@ -34,14 +34,16 @@ public class ProjectController {
             @RequestParam(name = "name", required = false) String name,
             @RequestParam(name = "sortBy", required = false, defaultValue = "recent") String sortBy,
             @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(name = "limit", required = false, defaultValue = "5") Integer limit
+            @RequestParam(name = "limit", required = false, defaultValue = "5") Integer limit,
+            @RequestParam(name = "favorite", required = false) Boolean favorite
     ) {
         return appService.getProjects(
                 authUser.getId(),
                 name,
                 sortBy,
                 page,
-                limit
+                limit,
+                favorite
         );
     }
 

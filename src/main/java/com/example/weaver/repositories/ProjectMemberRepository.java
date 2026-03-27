@@ -26,13 +26,6 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     List<ProjectMember> findAllByProject_Id(UUID projectId);
 
-    @Modifying
-    @Query("UPDATE ProjectMember pm SET pm.lastAccess = :now " +
-            "WHERE pm.user.id = :userId AND pm.project.id = :projectId")
-    void updateLastAccess(UUID userId,
-                          UUID projectId,
-                          Instant now);
-
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
 
@@ -47,5 +40,25 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
 
     long countByUser_IdAndIsPinnedTrue(UUID userId);
+
+    @Modifying
+    @Query("UPDATE ProjectMember pm SET pm.lastAccess = :now " +
+            "WHERE pm.user.id = :userId AND pm.project.id = :projectId")
+    void updateLastAccess(UUID userId,
+                          UUID projectId,
+                          Instant now);
+
+    @Modifying
+    @Query("""
+        UPDATE ProjectMember pm
+        SET pm.isFavorited = :isFavorited
+        WHERE pm.user.id = :userId
+          AND pm.project.id = :projectId
+    """)
+    int updateFavorite(
+            @Param("userId") UUID userId,
+            @Param("projectId") UUID projectId,
+            @Param("isFavorited") boolean isFavorited
+    );
 
 }

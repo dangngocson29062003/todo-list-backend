@@ -2,6 +2,7 @@ package com.example.weaver.controllers;
 
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.ProjectMemberRequest;
+import com.example.weaver.dtos.requests.UpdateFavoriteRequest;
 import com.example.weaver.dtos.requests.UpdateProjectMemberRoleRequest;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
 import com.example.weaver.models.ProjectMember;
@@ -20,14 +21,6 @@ import java.util.UUID;
 @RequestMapping("/projects/{projectId}/members")
 public class ProjectMemberController {
     private final AppService appService;
-
-//    @GetMapping
-//    public List<ProjectMemberResponse> getProjectMembers(@AuthenticationPrincipal AuthUser authUser,
-//                                                 @PathVariable UUID projectId) {
-//        return appService.getProjectMembers(projectId, authUser.getId());
-//    }
-
-
 
     @PostMapping("")
     public ProjectMemberResponse addProjectMember(@AuthenticationPrincipal AuthUser authUser,
@@ -53,6 +46,12 @@ public class ProjectMemberController {
     public void updateProjectPinStatus(@PathVariable UUID projectId,
                                    @PathVariable UUID userId){
         appService.updateProjectPinStatus(projectId,userId);
+    }
+
+    @PatchMapping("/{userId}/favorite")
+    public void updateProjectFavorite(@PathVariable UUID projectId,
+                                      @PathVariable UUID userId, @RequestBody UpdateFavoriteRequest request) {
+        appService.updateProjectFavorite(projectId, userId, request.getFavorite());
     }
 
     @PostMapping("/{userId}/last-access")

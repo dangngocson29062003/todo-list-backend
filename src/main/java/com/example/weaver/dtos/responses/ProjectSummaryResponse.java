@@ -27,17 +27,18 @@ public record ProjectSummaryResponse(
         long taskCount,
         long doneTaskCount,
         Instant lastAccess,
+        Boolean isFavorite,
         UserResponse createdBy
 ) {
     public ProjectSummaryResponse(
             UUID id, String name, String description, Stage stage, Priority priority,
             String tags, List<String> techStack, LocalDate startDate, LocalDate endDate, Instant createdAt,
             long memberCount, long taskCount, long doneTaskCount,
-            Instant lastAccess,
+            Instant lastAccess, Boolean isFavorite,
             UUID userId, String email, String fullName, String avatarUrl
     ) {
         this(id, name, description, stage, priority, tags, techStack, startDate, endDate, createdAt,
-                memberCount, taskCount, doneTaskCount, lastAccess,
+                memberCount, taskCount, doneTaskCount, lastAccess, isFavorite,
                 new UserResponse(userId, email, fullName, null, null, null, avatarUrl));
     }
     public static ProjectSummaryResponse toResponse(Project p, ProjectMember pm) {
@@ -57,6 +58,7 @@ public record ProjectSummaryResponse(
                 p.getTasks() != null ? p.getTasks().stream()
                         .filter(t -> t.getStatus().name().equals("DONE")).count() : 0,
                 pm.getLastAccess() != null ? pm.getLastAccess() : Instant.now(),
+                pm.isFavorited(),
                 UserResponse.toResponse(p.getCreatedBy())
         );
     }

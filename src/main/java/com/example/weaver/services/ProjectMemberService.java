@@ -3,6 +3,7 @@ package com.example.weaver.services;
 import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.enums.Role;
 import com.example.weaver.exceptions.BadRequestException;
+import com.example.weaver.exceptions.NotFoundException;
 import com.example.weaver.models.Project;
 import com.example.weaver.models.ProjectMember;
 import com.example.weaver.models.User;
@@ -32,6 +33,7 @@ public class ProjectMemberService {
                 .user(user)
                 .name(user.getNickname() != null ? user.getNickname() : user.getFullName())
                 .role(role)
+                .isFavorited(false)
                 .status(MemberStatus.PENDING)
                 .lastAccess(Instant.now())
                 .build();
@@ -93,7 +95,12 @@ public class ProjectMemberService {
         projectMember.setPinned(!projectMember.isPinned());
         repository.save(projectMember);
     }
-
+    public void updateProjectFavorite(UUID projectId, UUID userId, boolean isFavorited) {
+        int updated = repository.updateFavorite(userId, projectId, isFavorited);
+        if (updated == 0) {
+            throw new NotFoundException("Project member not found");
+        }
+    }
     public void updateProjectLastAccess(UUID projectId, UUID userId) {
         repository.updateLastAccess(userId, projectId, Instant.now());
     }

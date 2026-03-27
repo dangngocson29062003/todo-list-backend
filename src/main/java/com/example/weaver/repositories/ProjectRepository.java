@@ -35,6 +35,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
         (SELECT COUNT(t) FROM tasks t WHERE t.project = p),
         (SELECT COUNT(t2) FROM tasks t2 WHERE t2.project = p AND t2.status = 'DONE'),
         pm.lastAccess,
+        pm.isFavorited,
         u.id, u.email, u.fullName, u.avatarUrl
     )
     FROM projects p
@@ -42,10 +43,12 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     JOIN p.createdBy u
     WHERE pm.user.id = :userId
     AND (:name IS NULL OR p.name ILIKE CONCAT('%', CAST(:name as string), '%'))
+    AND (:favorite IS NULL OR pm.isFavorited = :favorite)
 """)
     Slice<ProjectSummaryResponse> findAllSummaries(
             UUID userId,
             @Param("name") String name,
+            @Param("favorite") Boolean favorite,
             Pageable pageable
     );
 

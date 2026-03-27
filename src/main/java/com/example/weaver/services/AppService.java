@@ -268,12 +268,13 @@ public class AppService {
             String name,
             String sortBy,
             Integer page,
-            Integer limit) {
+            Integer limit,
+            Boolean favorite) {
         int p = (page != null && page >= 0) ? page : 0;
         int l = (limit != null && limit > 0) ? limit : 5;
         String s = (sortBy != null) ? sortBy : "recent";
 
-        return projectService.getProjects(userId, name, s, p, l);
+        return projectService.getProjects(userId, name, s, p, l, favorite);
     }
 
 
@@ -350,7 +351,10 @@ public class AppService {
     public void updateProjectPinStatus(UUID projectId, UUID userId) {
         memberService.updateProjectPinStatus(projectId, userId);
     }
-
+    @Transactional
+    public void updateProjectFavorite(UUID projectId, UUID userId, boolean isFavorite) {
+        memberService.updateProjectFavorite(projectId, userId, isFavorite);
+    }
     public void updateProjectLastAccess(UUID projectId, UUID userId) {
         memberService.updateProjectLastAccess(projectId, userId);
     }

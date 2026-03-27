@@ -41,7 +41,8 @@ public class ProjectService {
                                                String name,
                                                String sortBy,
                                                int page,
-                                               int limit) {
+                                               int limit,
+                                               Boolean favorite) {
         int pageSize = Math.min(Math.max(limit, 1), 50);
         Sort sort = switch (sortBy.toLowerCase()) {
             case "alphabetical" -> Sort.by(Sort.Order.asc("p.name"));
@@ -50,7 +51,7 @@ public class ProjectService {
         };
         Pageable pageable = PageRequest.of(page, pageSize, sort);
         Slice<ProjectSummaryResponse> projectsSlice = projectRepository.findAllSummaries(
-                userId, name, pageable
+                userId, name, favorite, pageable
         );
         return new ProjectSummaryResponses(
                 projectsSlice.getContent(),
