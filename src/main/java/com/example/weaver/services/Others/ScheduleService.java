@@ -2,6 +2,7 @@ package com.example.weaver.services.Others;
 
 import com.example.weaver.services.EmailVerificationTokenService;
 import com.example.weaver.services.OutboxEventService;
+import com.example.weaver.services.InviteLinkService;
 import com.example.weaver.services.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,14 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
     private final EmailVerificationTokenService emailService;
     private final RefreshTokenService refreshTokenService;
+    private final InviteLinkService inviteLinkService;
     private final OutboxEventService outboxEventService;
 
     @Transactional
@@ -29,6 +29,12 @@ public class ScheduleService {
     @Transactional
     public void cleanupExpiredTokens() {
         refreshTokenService.deleteByExpiryDateBefore(Instant.now());
+    }
+
+    @Scheduled(cron = "0 0 0 * * *")
+    @Transactional
+    public void cleanupExpiredInviteLinks() {
+        inviteLinkService.deleteExpiredLinks();
     }
 
     @Scheduled(fixedDelay = 1000)

@@ -1,5 +1,6 @@
 package com.example.weaver.models;
 
+import com.example.weaver.enums.InviteType;
 import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.enums.Role;
 import jakarta.persistence.*;
@@ -67,6 +68,10 @@ public class ProjectMember {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private MemberStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "invite_type")
+    private InviteType inviteType;
 
     @CreationTimestamp
     private Instant createdAt;

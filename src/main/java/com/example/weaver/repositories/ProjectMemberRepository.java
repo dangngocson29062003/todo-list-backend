@@ -50,15 +50,26 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     @Modifying
     @Query("""
-        UPDATE ProjectMember pm
-        SET pm.isFavorited = :isFavorited
-        WHERE pm.user.id = :userId
-          AND pm.project.id = :projectId
-    """)
+                UPDATE ProjectMember pm
+                SET pm.isFavorited = :isFavorited
+                WHERE pm.user.id = :userId
+                  AND pm.project.id = :projectId
+            """)
     int updateFavorite(
             @Param("userId") UUID userId,
             @Param("projectId") UUID projectId,
             @Param("isFavorited") boolean isFavorited
     );
 
+    @Query("""
+                SELECT pm
+                FROM ProjectMember pm
+                LEFT JOIN FETCH pm.project p
+                WHERE pm.user.id = :userId
+                  AND pm.status IS NOT NULL
+                ORDER BY
+                  CASE WHEN pm.status = 'PENDING' THEN 0 ELSE 1 END,
+                  pm.createdAt DESC
+            """)
+    List<ProjectMember> getInvites(UUID userId);
 }

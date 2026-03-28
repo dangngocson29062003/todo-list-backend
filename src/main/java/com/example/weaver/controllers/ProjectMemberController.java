@@ -5,15 +5,13 @@ import com.example.weaver.dtos.requests.ProjectMemberRequest;
 import com.example.weaver.dtos.requests.UpdateFavoriteRequest;
 import com.example.weaver.dtos.requests.UpdateProjectMemberRoleRequest;
 import com.example.weaver.dtos.responses.ProjectMemberResponse;
-import com.example.weaver.models.ProjectMember;
+import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.services.AppService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,6 +26,14 @@ public class ProjectMemberController {
                                                   @RequestBody ProjectMemberRequest request){
         return appService.addProjectMember(authUser.getId(),projectId,request);
     }
+    @PostMapping("/{userId}/status")
+    public ProjectMemberResponse updateProjectMemberStatus(@AuthenticationPrincipal AuthUser authUser,
+                                                  @PathVariable UUID projectId,
+                                                  @PathVariable UUID userId,
+                                                  @RequestBody MemberStatus status){
+        return appService.acceptJoinProjectRequest(authUser.getId(),projectId,userId,status);
+    }
+
     @PutMapping("/{userId}")
     public ProjectMemberResponse updateProjectMemberRole(@AuthenticationPrincipal AuthUser authUser,
                                                  @PathVariable UUID projectId,

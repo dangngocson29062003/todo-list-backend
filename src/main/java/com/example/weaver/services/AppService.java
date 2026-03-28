@@ -14,7 +14,6 @@ import com.example.weaver.exceptions.InvalidTokenException;
 import com.example.weaver.models.*;
 import com.example.weaver.services.Others.IpLocationService;
 import com.example.weaver.services.Others.JwtService;
-import com.example.weaver.services.Others.KafkaEventProducer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
@@ -55,6 +54,7 @@ public class AppService {
     private final NotificationService notificationService;
     private final UserNotificationService userNotificationService;
     private final FileService fileService;
+    private final InviteLinkService inviteLinkService;
 
     private final OutboxEventService outboxEventService;
     private final PasswordEncoder passwordEncoder;
@@ -285,7 +285,8 @@ public class AppService {
     public ProjectSummaryResponse createProject(CreateProjectRequest request, UUID createdBy) {
         User creator = userService.findById(createdBy);
         Project project = projectService.createProject(request, creator);
-        ProjectMember manager = memberService.addProjectMember(project, creator, Role.MANAGER);
+        ProjectMember manager = memberService.addProjectMember(project, creator,
+                Role.MANAGER,MemberStatus.ACTIVE,null);
         if(!request.getMembers().isEmpty()) {
             List<UUID> userIds = request.getMembers()
                     .stream()
@@ -296,7 +297,7 @@ public class AppService {
                     .collect(Collectors.toMap(User::getId, u -> u));
             for (ProjectMemberRequest member : request.getMembers()) {
                 User newUser = userMap.get(member.getUserId());
-                memberService.addProjectMember(project, newUser, member.getRole());
+                memberService.addProjectMember(project, newUser, member.getRole(),MemberStatus.PENDING,InviteType.INVITED);
             }
         }
         return ProjectSummaryResponse.toResponse(project, manager);
@@ -335,7 +336,9 @@ public class AppService {
         ProjectMember newProjectMember = memberService.addProjectMember(
                 requester.getProject(),
                 newUser,
-                request.getRole()
+                request.getRole(),
+                MemberStatus.PENDING,
+                InviteType.INVITED
         );
 
 //        ProjectSummaryResponse projectSimpleResponse = ProjectSummaryResponse.toResponse(requester.getProject(), newProjectMember);
@@ -349,6 +352,21 @@ public class AppService {
 //        outboxEventService.create(OutboxEventTopic.MEMBER_ADDED, event);
 
         return ProjectMemberResponse.toResponse(newProjectMember);
+    }
+
+    public ProjectMemberResponse acceptJoinProjectRequest(UUID requesterId, UUID projectId,
+                                                          UUID memberId, MemberStatus status) {
+        memberService.checkRole(projectId,requesterId);
+        ProjectMember member = memberService.updateProjectMemberStatus(projectId, memberId,status);
+        return ProjectMemberResponse.toResponse(member);
+    }
+
+    public ProjectMemberResponse acceptJoinProjectInvite(UUID userId, UUID projectId, MemberStatus status) {
+        if(!memberService.memberExists(projectId, userId)) {
+            throw new ForbiddenException("You are not allowed to do this");
+        }
+        ProjectMember member = memberService.updateProjectMemberStatus(projectId, userId,status);
+        return ProjectMemberResponse.toResponse(member);
     }
 
     public void updateProjectPinStatus(UUID projectId, UUID userId) {
@@ -615,6 +633,25 @@ public class AppService {
         fileService.delete(id, taskId);
     }
 
+    //INVITE_LINK
+    public String createProjectInviteLink(UUID projectId,UUID requesterId){
+        memberService.checkRole(projectId, requesterId);
+        Project project=entityManager.getReference(Project.class, projectId);
+        InviteLink inviteLink = inviteLinkService.getInviteLink(project);
+        return inviteLink.getToken();
+    }
+    @Transactional
+    public void verifyProjectInviteLink(UUID userId,String token){
+        InviteLink inviteLink = inviteLinkService.validateInviteLink(token);
+        Project project= inviteLink.getProject();
+        User user=entityManager.getReference(User.class, userId);
+        memberService.addProjectMember(project,user,Role.VIEWER,MemberStatus.PENDING,InviteType.REQUESTED);
+    }
+
+    public void getPendingInvite(UUID userId){
+        List<ProjectMember> list=memberService.getInvites(userId);
+    }
+
     /// /////////////////////
     public static String hashToken(String token) {
         try {
@@ -652,6 +689,7 @@ public class AppService {
         Duration duration = Duration.between(Instant.now(), expiryDate);
         return duration.isNegative() ? Duration.ZERO : duration;
     }
+
 
 
 }

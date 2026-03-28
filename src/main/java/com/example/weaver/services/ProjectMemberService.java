@@ -1,5 +1,6 @@
 package com.example.weaver.services;
 
+import com.example.weaver.enums.InviteType;
 import com.example.weaver.enums.MemberStatus;
 import com.example.weaver.enums.Role;
 import com.example.weaver.exceptions.BadRequestException;
@@ -22,7 +23,8 @@ public class ProjectMemberService {
 
     private final Instant FAR_FUTURE = Instant.parse("9999-12-31T23:59:59Z");
 
-    public ProjectMember addProjectMember(Project project, User user, Role role) {
+    public ProjectMember addProjectMember(Project project, User user, Role role,
+                                          MemberStatus status, InviteType inviteType) {
         repository.findByProject_IdAndUser_Id(project.getId(), user.getId())
                 .ifPresent(m -> {
                     throw new BadRequestException("User is already a member or has a pending invite");
@@ -34,7 +36,8 @@ public class ProjectMemberService {
                 .name(user.getNickname() != null ? user.getNickname() : user.getFullName())
                 .role(role)
                 .isFavorited(false)
-                .status(MemberStatus.PENDING)
+                .status(status)
+                .inviteType(inviteType)
                 .lastAccess(Instant.now())
                 .build();
 
@@ -74,7 +77,7 @@ public class ProjectMemberService {
         ProjectMember member = getProjectMember(projectId, userId);
 
         if (member.getRole() != Role.MANAGER) {
-            throw new BadRequestException("You don't have permission to delete task");
+            throw new BadRequestException("You don't have permission to do this");
         }
         return member;
     }
@@ -105,4 +108,19 @@ public class ProjectMemberService {
         repository.updateLastAccess(userId, projectId, Instant.now());
     }
 
+    public ProjectMember updateProjectMemberStatus(UUID projectId, UUID memberId,MemberStatus newStatus) {
+        ProjectMember member = getProjectMember(projectId, memberId);
+        if(newStatus.equals(MemberStatus.ACTIVE) && !member.getStatus().equals(MemberStatus.ACTIVE)||
+                (newStatus.equals(MemberStatus.DEACTIVATED))&& !member.getStatus().equals(MemberStatus.DEACTIVATED)) {
+            member.setStatus(newStatus);
+            repository.save(member);
+        }else{
+            throw new BadRequestException("Invalid status");
+        }
+        return member;
+    }
+
+    public List<ProjectMember> getInvites(UUID userId) {
+        return repository.getInvites(userId);
+    }
 }
