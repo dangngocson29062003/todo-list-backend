@@ -67,6 +67,9 @@ public class User {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     private Set<TaskAssignment> taskAssignments = new HashSet<>();
 
+    @OneToMany(mappedBy = "deletedBy", fetch = FetchType.LAZY)
+    private Set<Project> deletedProject = new HashSet<>();
+
     @OneToMany(mappedBy = "sender", fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<Message> messages;

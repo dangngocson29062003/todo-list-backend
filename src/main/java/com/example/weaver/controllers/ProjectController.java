@@ -3,6 +3,7 @@ package com.example.weaver.controllers;
 import com.example.weaver.dtos.others.AuthUser;
 import com.example.weaver.dtos.requests.CreateProjectRequest;
 import com.example.weaver.dtos.requests.UpdateProjectRequest;
+import com.example.weaver.dtos.responses.DeletedProjectResponse;
 import com.example.weaver.dtos.responses.ProjectDetailResponse;
 import com.example.weaver.dtos.responses.ProjectSummaryResponse;
 import com.example.weaver.dtos.responses.ProjectSummaryResponses;
@@ -47,6 +48,11 @@ public class ProjectController {
         );
     }
 
+    @GetMapping("/bin")
+    public List<DeletedProjectResponse> getDeletedProjects(@AuthenticationPrincipal AuthUser authUser) {
+        return appService.getDeletedProjects(authUser.getId());
+    }
+
     @PostMapping
     public ProjectSummaryResponse createProject(@Valid @RequestBody CreateProjectRequest request,
                                                @AuthenticationPrincipal AuthUser authUser) {
@@ -60,10 +66,25 @@ public class ProjectController {
         return appService.updateProject(id, request, authUser.getId());
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteProject(@PathVariable UUID id,
+    @PatchMapping("/{id}/delete")
+    public void softDeleteProject(@PathVariable UUID id,
                               @AuthenticationPrincipal AuthUser authUser) {
-        appService.deleteProject(id, authUser.getId());
+        appService.softDeleteProject(id, authUser.getId());
     }
 
+    @PatchMapping("/{id}/restore")
+    public void restoreProject(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        appService.restoreProject(id, authUser.getId());
+    }
+
+    @DeleteMapping("/{id}")
+    public void hardDeleteProject(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        appService.hardDeleteProject(id, authUser.getId());
+    }
 }

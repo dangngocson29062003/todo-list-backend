@@ -81,4 +81,15 @@ public class Project {
     private Instant createdAt;
     @UpdateTimestamp
     private Instant updatedAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
+    @Column
+    private Instant deletedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "deletedBy")
+    private User deletedBy;
 }

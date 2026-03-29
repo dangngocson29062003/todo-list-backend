@@ -2,6 +2,7 @@ package com.example.weaver.services;
 
 import com.example.weaver.dtos.requests.CreateProjectRequest;
 import com.example.weaver.dtos.requests.UpdateProjectRequest;
+import com.example.weaver.dtos.responses.DeletedProjectResponse;
 import com.example.weaver.dtos.responses.ProjectSummaryResponse;
 import com.example.weaver.dtos.responses.ProjectSummaryResponses;
 import com.example.weaver.enums.Priority;
@@ -14,6 +15,7 @@ import com.example.weaver.repositories.ProjectRepository;
 import com.example.weaver.repositories.UserRepository;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -80,16 +82,6 @@ public class ProjectService {
         return projectRepository.save(project);
     }
 
-    public Project create(User user, String name, String description, Instant finishedAt) {
-        Project project = Project.builder()
-                .createdBy(user)
-                .name(name)
-                .description(description)
-                .finishedAt(finishedAt)
-                .build();
-        return projectRepository.save(project);
-    }
-
     public Project updateProject(UUID projectId, UpdateProjectRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -99,28 +91,55 @@ public class ProjectService {
             project.setName(request.getName());
         }
 
-        if (request.getDescription() != null) project.setDescription(request.getDescription());
+        if (request.getDescription() != null) project.setDescription(request.getDescription().trim());
         if (request.getStage() != null) project.setStage(request.getStage());
         if (request.getPriority() != null) project.setPriority(request.getPriority());
+        if (request.getGoals() != null) project.setGoals(request.getGoals());
+        if (request.getTechStack() != null) project.setTechStack(request.getTechStack());
 
-        LocalDate newStart = request.getStartDate() != null ? request.getStartDate() : project.getStartDate();
-        LocalDate newEnd = request.getEndDate() != null ? request.getEndDate() : project.getEndDate();
+        boolean startChanged = request.getStartDate() != null;
+        boolean endChanged = request.getEndDate() != null;
 
-        if (newStart != null && newEnd != null && newEnd.isBefore(newStart)) {
-            throw new BadRequestException("End date cannot be before start date");
+        if (startChanged || endChanged) {
+            LocalDate newStart = startChanged ? request.getStartDate() : project.getStartDate();
+            LocalDate newEnd = endChanged ? request.getEndDate() : project.getEndDate();
+
+            if (newStart != null && newEnd != null && newEnd.isBefore(newStart)) {
+                throw new BadRequestException("End date cannot be before start date");
+            }
+
+            project.setStartDate(newStart);
+            project.setEndDate(newEnd);
         }
-
-        project.setStartDate(newStart);
-        project.setEndDate(newEnd);
         return projectRepository.save(project);
     }
 
-    public void deleteProject(UUID projectId) {
-        projectRepository.deleteById(projectId);
+    public List<DeletedProjectResponse> getDeletedProjects(UUID userId) {
+        return projectRepository.findAllDeletedSummaries(userId);
     }
 
-    public boolean existsById(UUID id) {
-        return projectRepository.existsById(id);
+    public void softDeleteProject(UUID projectId, User user) {
+        Project project = findById(projectId);
+        project.setIsDeleted(true);
+        project.setDeletedAt(Instant.now());
+        project.setDeletedBy(user);
+        projectRepository.save(project);
+    }
+
+    public void restoreProject(UUID projectId) {
+        Project project = findById(projectId);
+
+        project.setIsDeleted(false);
+        project.setDeletedAt(null);
+        project.setDeletedBy(null);
+
+        projectRepository.save(project);
+    }
+
+    public void hardDeleteProject(UUID projectId) {
+        Project project = findById(projectId);
+
+        projectRepository.delete(project);
     }
 
     public Project findById(UUID id) {
@@ -128,8 +147,4 @@ public class ProjectService {
                 .orElseThrow(() -> new NotFoundException("Project not found"));
     }
 
-    public Project getWithCreatedByAndMembersData(UUID projectId) {
-        return projectRepository.getWithCreatedByAndMembersData(projectId)
-                .orElseThrow(() -> new NotFoundException("Project not found"));
-    }
 }

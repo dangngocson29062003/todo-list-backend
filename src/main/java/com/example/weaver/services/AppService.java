@@ -281,6 +281,11 @@ public class AppService {
     }
 
 
+    @Transactional(readOnly = true)
+    public List<DeletedProjectResponse> getDeletedProjects(UUID userId) {
+        return projectService.getDeletedProjects(userId);
+    }
+
     @Transactional
     public ProjectSummaryResponse createProject(CreateProjectRequest request, UUID createdBy) {
         User creator = userService.findById(createdBy);
@@ -313,14 +318,30 @@ public class AppService {
     }
 
     @Transactional
-    public void deleteProject(UUID id, UUID requesterId) {
-        Project project = projectService.findById(id);
-        if (!requesterId.equals(project.getCreatedBy().getId())) {
+    public void softDeleteProject(UUID id, UUID requesterId) {
+        ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(id, requesterId);
+        if (!requester.getRole().equals(Role.MANAGER)) {
             throw new ForbiddenException("You are not allowed to delete this projectResponse");
         }
-        projectService.deleteProject(project.getId());
+        projectService.softDeleteProject(id, requester.getUser());
     }
 
+    @Transactional
+    public void restoreProject(UUID id, UUID requesterId) {
+        ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(id, requesterId);
+        if (!requester.getRole().equals(Role.MANAGER)) {
+            throw new ForbiddenException("You are not allowed to delete this projectResponse");
+        }
+        projectService.restoreProject(id);
+    }
+    @Transactional
+    public void hardDeleteProject(UUID id, UUID requesterId) {
+        ProjectMember requester = memberService.getProjectMemberWithProjectLoaded(id, requesterId);
+        if (!requester.getRole().equals(Role.MANAGER)) {
+            throw new ForbiddenException("You are not allowed to delete this projectResponse");
+        }
+        projectService.hardDeleteProject(id);
+    }
     //PROJECT_MEMBER
     @Transactional
     public ProjectMemberResponse addProjectMember(UUID requesterId, UUID projectId, ProjectMemberRequest request) {

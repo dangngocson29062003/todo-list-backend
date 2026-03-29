@@ -1,5 +1,6 @@
 package com.example.weaver.repositories;
 
+import com.example.weaver.dtos.responses.DeletedProjectResponse;
 import com.example.weaver.dtos.responses.ProjectSummaryResponse;
 import com.example.weaver.models.Project;
 import org.springframework.data.domain.Pageable;
@@ -41,7 +42,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     FROM projects p
     JOIN p.members pm
     JOIN p.createdBy u
-    WHERE pm.user.id = :userId
+    WHERE pm.user.id = :userId AND p.isDeleted = false
     AND (:name IS NULL OR p.name ILIKE CONCAT('%', CAST(:name as string), '%'))
     AND (:favorite IS NULL OR pm.isFavorited = :favorite)
 """)
@@ -51,7 +52,17 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
             @Param("favorite") Boolean favorite,
             Pageable pageable
     );
-
+    @Query("""
+    SELECT new com.example.weaver.dtos.responses.DeletedProjectResponse(
+        p.id, p.name, p.description, p.isDeleted, p.deletedAt,
+        u.id, u.email, u.fullName, u.nickname, u.phone, u.address, u.avatarUrl
+    )
+    FROM projects p
+    JOIN p.members pm
+    LEFT JOIN p.deletedBy u
+    WHERE pm.user.id = :userId AND p.isDeleted = true
+""")
+    List<DeletedProjectResponse> findAllDeletedSummaries(UUID userId);
 
     @Query("""
                 SELECT DISTINCT p
@@ -59,7 +70,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
                 LEFT JOIN FETCH p.createdBy
                 LEFT JOIN FETCH p.members m
                 LEFT JOIN FETCH m.user
-                WHERE p.id = :projectId
+                WHERE p.id = :projectId AND p.isDeleted = false
                 AND EXISTS (
                             SELECT 1 FROM ProjectMember pm
                             WHERE pm.project = p AND pm.user.id = :userId
