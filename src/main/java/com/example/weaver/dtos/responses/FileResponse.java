@@ -26,7 +26,7 @@ public class FileResponse {
 
     private Instant uploadedAt;
 
-    private Long taskId;
+    private UUID taskId;
 
     private UUID uploadedBy;
 

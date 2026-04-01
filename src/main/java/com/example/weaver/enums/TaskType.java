@@ -4,5 +4,9 @@ public enum TaskType {
     FEATURE,
     BUG,
     TASK,
-    MEETING
+    IMPROVEMENT,
+    REFACTOR,
+    RESEARCH,
+    TEST,
+    INFRA
 }

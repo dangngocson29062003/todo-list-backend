@@ -41,40 +41,27 @@ public class TaskAssignmentService {
 
     private final Instant FAR_FUTURE = Instant.parse("9999-12-31T23:59:59Z");
 
-    public void assign(Task task, TaskAssignmentRequest request, User assigner) {
-        List<UUID> projectMemberIds = projectMemberRepository
-                .findAllByProject_Id(task.getProject().getId())
+    public void assign(Task task, UUID userId, User assigner) {
+
+
+        boolean alreadyAssigned = taskAssignmentRepository.findAllByTask_Id(task.getId())
                 .stream()
-                .map(member -> member.getUser().getId())
-                .toList();
+                .anyMatch(taskAssignment -> taskAssignment.getUser().getId().equals(userId));
 
-        List<UUID> invalidIds = request.getUserIds().stream()
-                .filter(userId -> !projectMemberIds.contains(userId))
-                .toList();
-
-        if (!invalidIds.isEmpty()) {
-            throw new BadRequestException("Some users are not projectResponse members: " + invalidIds);
+        if (alreadyAssigned) {
+            return;
         }
 
-        List<UUID> alreadyAssignedIds = taskAssignmentRepository.findAllByTask_Id(task.getId())
-                .stream()
-                .map(ta -> ta.getUser().getId())
-                .toList();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + userId));
 
-        List<TaskAssignment> newAssignments = request.getUserIds().stream()
-                .filter(userId -> !alreadyAssignedIds.contains(userId))
-                .map(userId -> {
-                    User user = userRepository.findById(userId)
-                            .orElseThrow(() -> new NotFoundException("User not found: " + userId));
-                    return TaskAssignment.builder()
-                            .task(task)
-                            .user(user)
-                            .assignedBy(assigner)
-                            .build();
-                })
-                .toList();
+        TaskAssignment assignment = TaskAssignment.builder()
+                .task(task)
+                .user(user)
+                .assignedBy(assigner)
+                .build();
 
-        taskAssignmentRepository.saveAll(newAssignments);
+        taskAssignmentRepository.save(assignment);
     }
 
     public void unassign(Task task, UUID userId) {
@@ -82,7 +69,7 @@ public class TaskAssignmentService {
         taskAssignmentRepository.delete(taskAssignment);
     }
 
-    public TaskAssignment checkAssigner(UUID userId, Long taskId) {
+    public TaskAssignment checkAssigner(UUID userId, UUID taskId) {
         return taskAssignmentRepository
                 .findTaskAssignmentByTask_IdAndUser_Id(taskId, userId)
                 .orElseThrow(() -> new NotFoundException("User is not assigned to this task"));
@@ -114,7 +101,7 @@ public class TaskAssignmentService {
             return new TaskSimpleResponses(
                     responses,
                     FAR_FUTURE,
-                    0L,
+                    null,
                     true
             );
         }
@@ -144,9 +131,8 @@ public class TaskAssignmentService {
                 .map(TaskSimpleResponse::lastAccess)
                 .orElse(FAR_FUTURE);
 
-        Long lastId = Optional.ofNullable(lastTask)
-                .map(TaskSimpleResponse::id)
-                .orElse(0L);
+        UUID lastId = Optional.ofNullable(lastTask)
+                .map(TaskSimpleResponse::id).orElseThrow();
 
         return new TaskSimpleResponses(
                 responses,
@@ -156,7 +142,7 @@ public class TaskAssignmentService {
         );
     }
 
-    public void updateTaskPinStatus(Long taskId, UUID userId) {
+    public void updateTaskPinStatus(UUID taskId, UUID userId) {
         TaskAssignment taskAssignment = checkAssigner(userId,taskId);
         if (!taskAssignment.isPinned()) {
             long taskAssignments = taskAssignmentRepository.countByUser_IdAndIsPinnedTrue(userId);
@@ -169,7 +155,7 @@ public class TaskAssignmentService {
         taskAssignmentRepository.save(taskAssignment);
     }
 
-    public void updateTaskLastAccess(Long taskId, UUID userId) {
+    public void updateTaskLastAccess(UUID taskId, UUID userId) {
         TaskAssignment taskAssignment = checkAssigner(userId, taskId);
         taskAssignment.setLastAccess(Instant.now());
         taskAssignmentRepository.save(taskAssignment);

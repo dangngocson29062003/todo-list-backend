@@ -11,12 +11,11 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -24,8 +23,8 @@ import java.util.Set;
 public class Task {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column
     private String name;
@@ -40,10 +39,10 @@ public class Task {
     private Instant updatedAt;
 
     @Column
-    private Instant startedAt;
+    private LocalDate startedAt;
 
     @Column
-    private Instant endedAt;
+    private LocalDate endedAt;
 
     @Column
     private Instant completedAt;
@@ -60,7 +59,13 @@ public class Task {
     @Column
     private Priority priority;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @Column
+    private Boolean isDeleted;
+
+    @Column
+    private Instant deletedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "projectId")
     @JsonIgnore
     private Project project;
@@ -70,18 +75,18 @@ public class Task {
     @JsonIgnore
     private Task parent;
 
-    @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Task> children = new ArrayList<>();
 
-    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<Attachment> attachments = new HashSet<>();
 
-    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private Set<Comment> comments = new HashSet<>();
 
-    @OneToMany(mappedBy = "task", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TaskAssignment> assignments = new ArrayList<>();
 }

@@ -22,6 +22,11 @@ import java.util.UUID;
 public class ProjectMemberController {
     private final AppService appService;
 
+    @GetMapping()
+    public List<ProjectMemberResponse> getMembers(@AuthenticationPrincipal AuthUser authUser, @PathVariable UUID projectId) {
+        return appService.getMembers(authUser.getId(), projectId);
+    }
+
     @PostMapping("")
     public ProjectMemberResponse addProjectMember(@AuthenticationPrincipal AuthUser authUser,
                                                   @PathVariable UUID projectId,

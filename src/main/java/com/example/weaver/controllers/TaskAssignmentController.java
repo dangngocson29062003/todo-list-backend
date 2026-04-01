@@ -23,25 +23,25 @@ public class TaskAssignmentController {
     private AppService appService;
 
     @PostMapping
-    public TaskResponse assign(@PathVariable Long id,
+    public TaskResponse assign(@PathVariable UUID id,
                                @RequestBody TaskAssignmentRequest request,
                                @AuthenticationPrincipal AuthUser authUser) {
         return appService.assignTask(id, request, authUser.getId());
     }
 
     @DeleteMapping("/{userId}")
-    public void unassign(@Valid @PathVariable Long id,
+    public void unassign(@Valid @PathVariable UUID id,
                                  @PathVariable UUID userId,
                                  @AuthenticationPrincipal AuthUser authUser){
         appService.unassignTask(id, userId, authUser.getId());
     }
     @PostMapping("/{userId}/pin")
-    public void updateTaskIndex(@PathVariable Long id,
+    public void updateTaskIndex(@PathVariable UUID id,
                                    @PathVariable UUID userId){
         appService.updateTaskPinStatus(id,userId);
     }
     @PostMapping("/{userId}/last-access")
-    public void updateTaskLastAccess(@PathVariable Long id,
+    public void updateTaskLastAccess(@PathVariable UUID id,
                                         @PathVariable UUID userId){
         appService.updateTaskLastAccess(id,userId);
     }

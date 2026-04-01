@@ -12,7 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public List<Comment> getComments(Long taskId) {
+    public List<Comment> getComments(UUID taskId) {
         return commentRepository.findCommentsByTask_Id(taskId);
     }
 
@@ -37,6 +39,7 @@ public class CommentService {
         comment.setContent(content);
         return comment;
     }
+
     public void delete(Comment comment) {
         commentRepository.delete(comment);
     }
@@ -47,6 +50,19 @@ public class CommentService {
             throw new BadRequestException("You are not the author of this comment");
         }
         return comment;
+    }
+
+    public Map<UUID, Long> getCommentCountMap(List<UUID> taskIds) {
+        if (taskIds == null || taskIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return commentRepository.countByTaskIds(taskIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (UUID) row[0],
+                        row -> (Long) row[1]
+                ));
     }
 
 }

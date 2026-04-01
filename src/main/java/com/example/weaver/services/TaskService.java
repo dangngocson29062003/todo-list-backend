@@ -30,7 +30,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
 
-    public Task getTask(Long id){
+    public Task getTask(UUID id){
         return taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
     }
 
@@ -54,15 +54,16 @@ public class TaskService {
                     .orElseThrow(() -> new NotFoundException("Parent task not found"));
 
             if (!parent.getProject().getId().equals(projectId)) {
-                throw new BadRequestException("Parent task must belong to same projectResponse");
+                throw new BadRequestException("Parent task must beUUID to same projectResponse");
             }
         }
 
         Task task = Task.builder().project(project)
                 .name(createTaskRequest.getName())
                 .description(createTaskRequest.getDescription())
-                .startedAt(createTaskRequest.getStartedAt())
-                .endedAt(createTaskRequest.getEndedAt()).type(createTaskRequest.getTaskType())
+                .startedAt(createTaskRequest.getStartDate())
+                .endedAt(createTaskRequest.getEndDate())
+                .type(createTaskRequest.getTaskType())
                 .status(createTaskRequest.getTaskStatus() != null ? createTaskRequest.getTaskStatus() : TaskStatus.TODO)
                 .priority(createTaskRequest.getPriority())
                 .parent(parent)
@@ -71,7 +72,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
-    public Task update(Long id, UpdateTaskRequest updateTaskRequest){
+    public Task update(UUID id, UpdateTaskRequest updateTaskRequest){
         Task task = taskRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
 
         if (updateTaskRequest.getName() != null) {
@@ -82,30 +83,31 @@ public class TaskService {
             task.setDescription(updateTaskRequest.getDescription());
         }
 
-        if (updateTaskRequest.getStartedAt() != null) {
-            task.setStartedAt(updateTaskRequest.getStartedAt());
+        if (updateTaskRequest.getStartDate() != null) {
+            task.setStartedAt(updateTaskRequest.getStartDate());
         }
 
-        if (updateTaskRequest.getEndedAt() != null) {
-            if (updateTaskRequest.getStartedAt() != null && updateTaskRequest.getEndedAt().isBefore(updateTaskRequest.getStartedAt())) {
+        if (updateTaskRequest.getEndDate() != null) {
+            if (updateTaskRequest.getStartDate() != null && updateTaskRequest.getEndDate().isBefore(updateTaskRequest.getStartDate())) {
                 throw new BadRequestException("End date must be after start date");
             }
-            task.setEndedAt(updateTaskRequest.getEndedAt());
+            task.setEndedAt(updateTaskRequest.getEndDate());
         }
 
         if (updateTaskRequest.getTaskType() != null) {
             task.setType(updateTaskRequest.getTaskType());
         }
 
-        if (updateTaskRequest.getTaskStatus() != null) {
-            task.setStatus(updateTaskRequest.getTaskStatus());
+        if (updateTaskRequest.getStatus() != null) {
+            task.setStatus(updateTaskRequest.getStatus());
         }
 
         if (updateTaskRequest.getPriority() != null) {
             task.setPriority(updateTaskRequest.getPriority());
         }
 
-        return taskRepository.save(task);
+        taskRepository.save(task);
+        return taskRepository.findByIdWithAssignments(id);
     }
 
     public void delete(Task task) {

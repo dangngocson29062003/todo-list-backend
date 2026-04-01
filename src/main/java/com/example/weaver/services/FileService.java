@@ -27,7 +27,7 @@ public class FileService {
 
     private final AttachmentRepository attachmentRepository;
 
-    public List<Attachment> getFiles(Long taskId) {
+    public List<Attachment> getFiles(UUID taskId) {
         return attachmentRepository.findAttachmentsByTask_Id(taskId);
     }
 
@@ -56,7 +56,7 @@ public class FileService {
         }
     }
 
-    public void delete(UUID id, Long taskId) {
+    public void delete(UUID id, UUID taskId) {
         try {
             Attachment attachment = attachmentRepository.findById(id).orElseThrow(() -> new NotFoundException("File not found"));
             String publicId = taskId.toString() + "/" + attachment.getFileName();

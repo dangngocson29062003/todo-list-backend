@@ -6,6 +6,7 @@ import com.example.weaver.enums.TaskType;
 import lombok.*;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -15,10 +16,10 @@ public class UpdateTaskRequest {
     private String name;
     private String description;
 
-    private Instant startedAt;
-    private Instant endedAt;
+    private LocalDate startDate;
+    private LocalDate endDate;
 
     private TaskType taskType;
     private Priority priority;
-    private TaskStatus taskStatus;
+    private TaskStatus status;
 }

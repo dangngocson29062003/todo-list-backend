@@ -17,9 +17,9 @@ import java.util.UUID;
 
 @Repository
 public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, Long> {
-    List<TaskAssignment> findAllByTask_Id(Long taskId);
-    boolean existsByTask_IdAndUser_Id(Long taskId, UUID userId);
-    Optional<TaskAssignment> findTaskAssignmentByTask_IdAndUser_Id(Long taskId, UUID userId);
+    List<TaskAssignment> findAllByTask_Id(UUID taskId);
+    boolean existsByTask_IdAndUser_Id(UUID taskId, UUID userId);
+    Optional<TaskAssignment> findTaskAssignmentByTask_IdAndUser_Id(UUID taskId, UUID userId);
 
     @Query("""
         SELECT new com.example.weaver.dtos.responses.TaskSimpleResponse(

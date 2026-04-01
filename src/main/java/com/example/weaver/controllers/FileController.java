@@ -23,17 +23,17 @@ public class FileController {
     private final AppService appService;
 
     @GetMapping
-    public List<FileResponse> getFiles(@PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser) {
+    public List<FileResponse> getFiles(@PathVariable UUID taskId, @AuthenticationPrincipal AuthUser authUser) {
         return appService.getFiles(taskId, authUser.getId());
     }
 
     @PostMapping
-    public FileResponse upload(@PathVariable Long taskId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AuthUser authUser) {
+    public FileResponse upload(@PathVariable UUID taskId, @RequestParam("file") MultipartFile file, @AuthenticationPrincipal AuthUser authUser) {
         return appService.uploadFiles(taskId, authUser.getId(), file);
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long taskId, @PathVariable UUID id, @AuthenticationPrincipal AuthUser authUser) {
+    public void delete(@PathVariable UUID taskId, @PathVariable UUID id, @AuthenticationPrincipal AuthUser authUser) {
         appService.deleteFile(taskId, authUser.getId(), id);
     }
 }

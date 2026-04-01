@@ -22,6 +22,10 @@ public class ProjectMemberService {
 
     private final Instant FAR_FUTURE = Instant.parse("9999-12-31T23:59:59Z");
 
+    public List<ProjectMember> getMembers(UUID projectId) {
+        return repository.findAllByProject_Id(projectId);
+    }
+
     public ProjectMember addProjectMember(Project project, User user, Role role) {
         repository.findByProject_IdAndUser_Id(project.getId(), user.getId())
                 .ifPresent(m -> {
@@ -55,7 +59,6 @@ public class ProjectMemberService {
         repository.delete(projectMember);
     }
 
-
     public ProjectMember getProjectMember(UUID projectId, UUID userId) {
         return repository.findByProject_IdAndUser_Id(projectId, userId)
                 .orElseThrow(() -> new BadRequestException("User does not belong to this project"));
@@ -66,10 +69,9 @@ public class ProjectMemberService {
                 .orElseThrow(() -> new BadRequestException("User does not belong to this project"));
     }
 
-    public boolean memberExists(UUID projectId, UUID userId) {
+    public boolean existsMember(UUID projectId, UUID userId) {
         return repository.existsByProject_IdAndUser_Id(projectId, userId);
     }
-
     public ProjectMember checkRole(UUID projectId, UUID userId) {
         ProjectMember member = getProjectMember(projectId, userId);
 
@@ -78,11 +80,11 @@ public class ProjectMemberService {
         }
         return member;
     }
-
-    public List<ProjectMember> getWithUsers(UUID projectId) {
-        return repository.findWithUsersByProject_Id(projectId);
+    public boolean findIsFavorite(UUID projectId, UUID userId) {
+        return repository
+                .findIsFavoriteByProjectIdAndUserId(projectId, userId)
+                .orElse(false);
     }
-
     public void updateProjectPinStatus(UUID projectId, UUID userId) {
         ProjectMember projectMember = getProjectMember(projectId, userId);
         if (!projectMember.isPinned()) {

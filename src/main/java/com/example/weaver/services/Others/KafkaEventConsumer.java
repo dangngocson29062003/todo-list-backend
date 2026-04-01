@@ -64,11 +64,11 @@ public class KafkaEventConsumer {
                 event.projectResponse(), event.category(),event.priority(), event.type());
     }
 
-    @KafkaListener(topics = "task.assigned")
-    public void handleTaskAssigned(String payload) throws Exception {
-        TaskAssignedEvent event = objectMapper.readValue(payload, TaskAssignedEvent.class);
-        appService.createNotifications(event.userIds(), event.code(),
-                event.taskResponse(), event.category(),event.priority(), event.type());
-    }
+//    @KafkaListener(topics = "task.assigned")
+//    public void handleTaskAssigned(String payload) throws Exception {
+//        TaskAssignedEvent event = objectMapper.readValue(payload, TaskAssignedEvent.class);
+//        appService.createNotifications(event.userId(), event.code(),
+//                event.taskResponse(), event.category(),event.priority(), event.type());
+//    }
 
 }

@@ -9,24 +9,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class SubtaskResponse {
-    private Long id;
+    private UUID id;
 
     private String name;
     private String description;
 
-    private Instant startedAt;
-    private Instant endedAt;
+    private LocalDate startedAt;
+    private LocalDate endedAt;
 
     private TaskType taskType;
     private Priority priority;
     private TaskStatus taskStatus;
 
-    private Long parentId;
+    private UUID parentId;
 
     public static SubtaskResponse toResponse(Task task ) {
         return new SubtaskResponse(task.getId(),

@@ -29,16 +29,6 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     boolean existsByProject_IdAndUser_Id(UUID projectId, UUID userId);
 
-    @Query("SELECT pm.role FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id = :userId")
-    Optional<Role> findRoleByProjectIdAndUserId(UUID projectId, UUID userId);
-
-
-    @EntityGraph(attributePaths = {
-            "user"
-    })
-    List<ProjectMember> findWithUsersByProject_Id(UUID projectId);
-
-
     long countByUser_IdAndIsPinnedTrue(UUID userId);
 
     @Modifying
@@ -48,13 +38,21 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
                           UUID projectId,
                           Instant now);
 
+    @Query("""
+                SELECT pm.isFavorited
+                FROM ProjectMember pm
+                WHERE pm.project.id = :projectId
+                  AND pm.user.id = :userId
+            """)
+    Optional<Boolean> findIsFavoriteByProjectIdAndUserId(UUID projectId, UUID userId);
+
     @Modifying
     @Query("""
-        UPDATE ProjectMember pm
-        SET pm.isFavorited = :isFavorited
-        WHERE pm.user.id = :userId
-          AND pm.project.id = :projectId
-    """)
+                UPDATE ProjectMember pm
+                SET pm.isFavorited = :isFavorited
+                WHERE pm.user.id = :userId
+                  AND pm.project.id = :projectId
+            """)
     int updateFavorite(
             @Param("userId") UUID userId,
             @Param("projectId") UUID projectId,

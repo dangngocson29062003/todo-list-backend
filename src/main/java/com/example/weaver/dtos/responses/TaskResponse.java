@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,21 +20,22 @@ import java.util.UUID;
 @NoArgsConstructor
 public class TaskResponse {
 
-    private Long id;
+    private UUID id;
 
     private String name;
     private String description;
 
-    private Instant startedAt;
-    private Instant endedAt;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Instant createdAt;
 
     private TaskType taskType;
     private Priority priority;
-    private TaskStatus taskStatus;
+    private TaskStatus status;
 
     private UUID projectId;
 
-    private Long parentId;
+    private UUID parentId;
 
     private List<TaskAssignmentResponse> assignees;
 
@@ -56,6 +58,7 @@ public class TaskResponse {
                 task.getDescription(),
                 task.getStartedAt(),
                 task.getEndedAt(),
+                task.getCreatedAt(),
                 task.getType(),
                 task.getPriority(),
                 task.getStatus(),

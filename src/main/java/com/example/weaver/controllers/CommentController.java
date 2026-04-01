@@ -19,23 +19,23 @@ public class CommentController {
     private final AppService appService;
 
     @PostMapping
-    public CommentResponse create(@PathVariable Long taskId, @RequestBody CommentRequest commentRequest, @AuthenticationPrincipal AuthUser authUser) {
+    public CommentResponse create(@PathVariable UUID taskId, @RequestBody CommentRequest commentRequest, @AuthenticationPrincipal AuthUser authUser) {
         return appService.createComment(taskId, authUser.getId(), commentRequest);
     }
 
     @GetMapping
-    public List<CommentResponse> getComments(@PathVariable Long taskId, @AuthenticationPrincipal AuthUser authUser) {
+    public List<CommentResponse> getComments(@PathVariable UUID taskId, @AuthenticationPrincipal AuthUser authUser) {
         return appService.getComments(taskId, authUser.getId());
     }
 
     @PutMapping ("/{id}")
-    public CommentResponse update(@PathVariable Long taskId, @PathVariable Long id, @RequestBody String content, @AuthenticationPrincipal AuthUser authUser) {
+    public CommentResponse update(@PathVariable UUID taskId, @PathVariable Long id, @RequestBody String content, @AuthenticationPrincipal AuthUser authUser) {
         return appService.updateComment(taskId, id, authUser.getId(), content);
     }
 
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long taskId, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
+    public void delete(@PathVariable UUID taskId, @PathVariable Long id, @AuthenticationPrincipal AuthUser authUser){
         appService.deleteComment(taskId, authUser.getId(), id);
     }
 }

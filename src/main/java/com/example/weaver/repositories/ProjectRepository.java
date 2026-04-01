@@ -8,11 +8,14 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import com.example.weaver.models.ProjectMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Optional;
@@ -77,4 +80,9 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
                            )
             """)
     Optional<Project> findDetailById(UUID projectId, UUID userId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM projects p WHERE p.deletedAt <= :threshold")
+    void hardDeleteOldSoftDeletedProjects(Instant threshold);
 }

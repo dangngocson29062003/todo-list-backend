@@ -262,7 +262,8 @@ public class AppService {
         Project project = projectService.getProject(projectId, userId);
         memberService.updateProjectLastAccess(projectId, userId);
         StatsResponse stats = taskService.getStats(projectId);
-        return ProjectDetailResponse.toResponse(project, stats);
+        Boolean isFavorite = memberService.findIsFavorite(projectId, userId);
+        return ProjectDetailResponse.toResponse(project, isFavorite, stats);
     }
 
     @Transactional(readOnly = true)
@@ -314,7 +315,7 @@ public class AppService {
             throw new ForbiddenException("You are not allowed to update this projectResponse");
         }
         Project project = projectService.updateProject(projectId, request, userId);
-        return ProjectDetailResponse.toResponse(project, null);
+        return ProjectDetailResponse.toResponse(project, null, null);
     }
 
     @Transactional
@@ -343,6 +344,11 @@ public class AppService {
         projectService.hardDeleteProject(id);
     }
     //PROJECT_MEMBER
+    @Transactional
+    public List<ProjectMemberResponse> getMembers(UUID requesterId, UUID projectId) {
+        return memberService.getMembers(projectId).stream().map(ProjectMemberResponse::toResponse).toList();
+    }
+
     @Transactional
     public ProjectMemberResponse addProjectMember(UUID requesterId, UUID projectId, ProjectMemberRequest request) {
         if (requesterId.equals(request.getUserId())) {
@@ -463,7 +469,7 @@ public class AppService {
 
     // Tasks
     @Transactional(readOnly = true)
-    public TaskResponse getTask(Long taskId, UUID requesterId) {
+    public TaskResponse getTask(UUID taskId, UUID requesterId) {
 
         Task task = taskService.getTask(taskId);
         memberService.getProjectMember(task.getProject().getId(), requesterId);
@@ -472,17 +478,23 @@ public class AppService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskResponse> getTasks(UUID projectId,
+    public List<TaskSummaryResponse> getTasks(UUID projectId,
                                        UUID requesterId,
                                        TaskStatus status,
                                        Priority priority,
                                        TaskType type) {
 
         memberService.getProjectMember(projectId, requesterId);
-
-        return taskService.getTasks(projectId, status, priority, type)
-                .stream()
-                .map(TaskResponse::toResponse)
+        List<Task> tasks = taskService.getTasks(projectId, status, priority, type);
+        List<UUID> taskIds = tasks.stream()
+                .map(Task::getId)
+                .toList();
+        Map<UUID, Long> commentCountMap = commentService.getCommentCountMap(taskIds);
+        return tasks.stream()
+                .map(task -> TaskSummaryResponse.toResponse(
+                        task,
+                        commentCountMap.getOrDefault(task.getId(), 0L)
+                ))
                 .toList();
 
     }
@@ -495,21 +507,47 @@ public class AppService {
 
         memberService.checkRole(projectId, requesterId);
 
-        return TaskResponse.toResponse(taskService.create(projectId, createTaskRequest));
+        List<UUID> assigneeIds = createTaskRequest.getAssignees() == null
+                ? List.of()
+                : createTaskRequest.getAssignees().stream()
+                .map(TaskAssignmentRequest::getUserId)
+                .peek(userId -> {
+                    if (userId == null) {
+                        throw new BadRequestException("Assignee userId must not be null");
+                    }
+                })
+                .distinct()
+                .toList();
+
+        for (UUID assigneeId : assigneeIds) {
+            boolean isMember = memberService.existsMember(projectId, assigneeId);
+            if (!isMember) {
+                throw new BadRequestException("User is not a project member: " + assigneeId);
+            }
+        }
+
+        Task task = taskService.create(projectId, createTaskRequest);
+
+        if (!assigneeIds.isEmpty()) {
+            User assigner = userService.findById(requesterId);
+            for (UUID assigneeId : assigneeIds) {
+                taskAssignmentService.assign(task, assigneeId, assigner);
+            }
+        }
+
+        return TaskResponse.toResponse(task);
     }
 
     @Transactional
-    public TaskResponse updateTask(Long id, UUID requesterId, UpdateTaskRequest updateTaskRequest) {
+    public TaskResponse updateTask(UUID id, UUID projectId, UUID requesterId, UpdateTaskRequest updateTaskRequest) {
 
-        Task task = taskService.getTask(id);
-
-        memberService.checkRole(task.getProject().getId(), requesterId);
+        memberService.checkRole(projectId, requesterId);
 
         return TaskResponse.toResponse(taskService.update(id, updateTaskRequest));
     }
 
     @Transactional
-    public void deleteTask(Long id, UUID requesterId) {
+    public void deleteTask(UUID id, UUID requesterId) {
 
         Task task = taskService.getTask(id);
 
@@ -525,17 +563,17 @@ public class AppService {
     }
 
     @Transactional
-    public TaskResponse assignTask(Long id, TaskAssignmentRequest request, UUID requesterId) {
+    public TaskResponse assignTask(UUID id, TaskAssignmentRequest request, UUID requesterId) {
         Task task = taskService.getTask(id);
 
         ProjectMember assigner = memberService.checkRole(task.getProject().getId(), requesterId);
 
-        taskAssignmentService.assign(task, request, assigner.getUser());
+        taskAssignmentService.assign(task, request.getUserId(), assigner.getUser());
 
         TaskResponse taskResponse = TaskResponse.toResponse(task);
 
         TaskAssignedEvent taskAssignedEvent = new TaskAssignedEvent(
-                request.getUserIds(),
+                request.getUserId(),
                 taskResponse,
                 NotificationCode.TASK_ASSIGNED,
                 NotificationCategory.TASK,
@@ -548,7 +586,7 @@ public class AppService {
     }
 
     @Transactional
-    public void unassignTask(Long id, UUID userId, UUID requesterId) {
+    public void unassignTask(UUID id, UUID userId, UUID requesterId) {
         Task task = taskService.getTask(id);
 
         memberService.checkRole(task.getProject().getId(), requesterId);
@@ -557,17 +595,17 @@ public class AppService {
 
     }
 
-    public void updateTaskPinStatus(Long taskId, UUID userId) {
+    public void updateTaskPinStatus(UUID taskId, UUID userId) {
         taskAssignmentService.updateTaskPinStatus(taskId, userId);
     }
 
-    public void updateTaskLastAccess(Long taskId, UUID userId) {
+    public void updateTaskLastAccess(UUID taskId, UUID userId) {
         taskAssignmentService.updateTaskLastAccess(taskId, userId);
     }
 
     //Comment
     @Transactional
-    public CommentResponse createComment(Long taskId, UUID userId, CommentRequest request) {
+    public CommentResponse createComment(UUID taskId, UUID userId, CommentRequest request) {
         Task task = taskService.getTask(taskId);
         User user = userService.findById(userId);
         memberService.checkRole(task.getProject().getId(), userId);
@@ -576,7 +614,7 @@ public class AppService {
     }
 
     @Transactional(readOnly = true)
-    public List<CommentResponse> getComments(Long taskId, UUID userId) {
+    public List<CommentResponse> getComments(UUID taskId, UUID userId) {
         Task task = taskService.getTask(taskId);
         memberService.checkRole(task.getProject().getId(), userId);
 
@@ -587,7 +625,7 @@ public class AppService {
     }
 
     @Transactional
-    public CommentResponse updateComment(Long taskId, Long id, UUID userId, String content) {
+    public CommentResponse updateComment(UUID taskId, Long id, UUID userId, String content) {
         Task task = taskService.getTask(taskId);
         memberService.checkRole(task.getProject().getId(), userId);
 
@@ -597,7 +635,7 @@ public class AppService {
     }
 
     @Transactional
-    public void deleteComment(Long taskId, UUID userId, Long id) {
+    public void deleteComment(UUID taskId, UUID userId, Long id) {
         Task task = taskService.getTask(taskId);
         memberService.checkRole(task.getProject().getId(), userId);
 
@@ -608,7 +646,7 @@ public class AppService {
 
     //Files
     @Transactional(readOnly = true)
-    public List<FileResponse> getFiles(Long taskId, UUID userId) {
+    public List<FileResponse> getFiles(UUID taskId, UUID userId) {
         Task task = taskService.getTask(taskId);
         User user = userService.findById(userId);
         memberService.checkRole(task.getProject().getId(), userId);
@@ -617,7 +655,7 @@ public class AppService {
     }
 
     @Transactional
-    public FileResponse uploadFiles(Long taskId, UUID userId, MultipartFile file) {
+    public FileResponse uploadFiles(UUID taskId, UUID userId, MultipartFile file) {
         Task task = taskService.getTask(taskId);
         User user = userService.findById(userId);
         memberService.checkRole(task.getProject().getId(), userId);
@@ -627,7 +665,7 @@ public class AppService {
     }
 
     @Transactional
-    public void deleteFile(Long taskId, UUID userId, UUID id) {
+    public void deleteFile(UUID taskId, UUID userId, UUID id) {
         Task task = taskService.getTask(taskId);
         User user = userService.findById(userId);
         memberService.checkRole(task.getProject().getId(), userId);

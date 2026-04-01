@@ -5,9 +5,10 @@ import com.example.weaver.models.Task;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public record TaskSimpleResponses(List<TaskSimpleResponse> tasks,
                                   Instant lastAccessCursor,
-                                  Long idCursor,
+                                  UUID idCursor,
                                   boolean hasNext) {
 }

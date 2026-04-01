@@ -10,7 +10,7 @@ import com.example.weaver.models.Task;
 import java.util.List;
 import java.util.UUID;
 
-public record TaskAssignedEvent(List<UUID> userIds, TaskResponse taskResponse,
+public record TaskAssignedEvent(UUID userId, TaskResponse taskResponse,
                                 NotificationCode code,
                                 NotificationCategory category,
                                 Priority priority,

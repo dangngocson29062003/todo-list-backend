@@ -27,6 +27,8 @@ public record ProjectDetailResponse(
         String githubUrl,
         String figmaUrl,
 
+        Boolean isFavorite,
+
         LocalDate startDate,
         LocalDate endDate,
         Instant createdAt,
@@ -37,7 +39,7 @@ public record ProjectDetailResponse(
         StatsResponse stats
 ) {
 
-    public static ProjectDetailResponse toResponse(Project p,  StatsResponse stats) {
+    public static ProjectDetailResponse toResponse(Project p, Boolean isFavorite,  StatsResponse stats) {
         return new ProjectDetailResponse(
                 p.getId(),
                 p.getName(),
@@ -49,6 +51,7 @@ public record ProjectDetailResponse(
                 p.getTechStack(),
                 p.getGithubUrl(),
                 p.getFigmaUrl(),
+                isFavorite,
                 p.getStartDate(),
                 p.getEndDate(),
                 p.getCreatedAt(),
